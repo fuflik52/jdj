@@ -1,257 +1,186 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Профиль Disord и Смена Дня/Ночи</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            background: linear-gradient(to bottom, #000022, #001a33 50%, #003366); /* Ночной фон */
-            transition: background 1s;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Andev Web</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@200;300;400;500;600;700&display=swap">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Open Sans", sans-serif;
+    }
 
-        .northern-lights {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(144, 238, 144, 0.2), transparent 70%), 
-                        radial-gradient(circle at 30% 40%, rgba(173, 216, 230, 0.3), transparent 80%), 
-                        radial-gradient(circle at 70% 30%, rgba(138, 43, 226, 0.2), transparent 90%);
-            opacity: 0.7;
-            animation: shimmer 5s ease-in-out infinite alternate;
-        }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      width: 100%;
+      padding: 0 10px;
+      background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+    }
 
-        @keyframes shimmer {
-            0% { transform: translateY(-20px); }
-            100% { transform: translateY(20px); }
-        }
+    body::before {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: url("https://i.postimg.cc/0jv27Qvw/20008380-645221846.jpg"), #000;
+      background-position: center;
+      background-size: cover;
+      z-index: -1;
+    }
 
-        .moon {
-            position: absolute;
-            top: 10%;
-            right: 5%;
-            width: 80px;
-            height: 80px;
-            background: radial-gradient(circle, #FFF, #999);
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            transition: background 1s, box-shadow 1s;
-        }
+    .wrapper {
+      width: 400px;
+      border-radius: 15px;
+      padding: 40px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+      transition: all 0.3s ease;
+    }
 
-        .sun {
-            background: radial-gradient(circle, #FFFF00, #FFA500);
-            box-shadow: 0 0 30px rgba(255, 165, 0, 0.7);
-        }
+    .wrapper:hover {
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+    }
 
-        .leaf {
-            position: absolute;
-            font-size: 20px;
-            pointer-events: none;
-        }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
 
-        .snowflake {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background-color: white;
-            opacity: 0.8;
-            pointer-events: none;
-            border-radius: 50%;
-            box-shadow: 0 0 10px white;
-        }
+    h2 {
+      font-size: 2.2rem;
+      margin-bottom: 25px;
+      color: #ffffff;
+      letter-spacing: 1px;
+    }
 
-        .snowy-box {
-            position: relative;
-            z-index: 2;
-            width: 400px;
-            height: 500px;
-            background: rgba(0, 0, 0, 0.6); /* Темный фон */
-            border-radius: 25px;
-            box-shadow: 0 0 20px rgba(0, 204, 255, 0.5);
-            border: 2px solid #00CCFF;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: background 1s, box-shadow 1s, border 1s;
-        }
+    .input-field {
+      position: relative;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+      margin: 20px 0;
+    }
 
-        h1 {
-            font-family: 'Arial', sans-serif;
-            color: #00CCFF;
-            margin-bottom: 10px;
-            transition: color 1s;
-        }
+    .input-field label {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      color: #ffffff;
+      font-size: 16px;
+      pointer-events: none;
+      transition: 0.3s ease;
+    }
 
-        .avatar {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-            border: 3px solid #00CCFF;
-            margin-bottom: 20px;
-        }
+    .input-field input {
+      width: 100%;
+      height: 40px;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      color: #ffffff;
+      padding: 0 10px;
+    }
 
-        .status {
-            font-family: 'Arial', sans-serif;
-            color: #ff0000; /* Голубой цвет текста */
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
+    .input-field input:focus~label,
+    .input-field input:valid~label {
+      font-size: 0.9rem;
+      top: 10px;
+      transform: translateY(-150%);
+      color: #ffdde1;
+    }
 
-        .description {
-            font-family: 'Arial', sans-serif;
-            color: #FFFFFF;
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
+    .forget {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 25px 0 35px 0;
+      color: #ffffff;
+    }
 
-        .snow-pile {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            background: linear-gradient(to top, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
-            opacity: 0.9;
-            z-index: 1;
-        }
+    #remember {
+      accent-color: #ffdde1;
+    }
 
-        .views-counter {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            font-family: 'Arial', sans-serif;
-            color: #00CCFF;
-            font-size: 16px;
-        }
-    </style>
+    .forget label {
+      display: flex;
+      align-items: center;
+    }
+
+    .forget label p {
+      margin-left: 8px;
+    }
+
+    .wrapper a {
+      color: #ffdde1;
+      text-decoration: none;
+    }
+
+    .wrapper a:hover {
+      text-decoration: underline;
+    }
+
+    button {
+      background-color: #271930;
+      color: #ffffff;
+      font-weight: 600;
+      border: none;
+      padding: 15px 20px;
+      cursor: pointer;
+      border-radius: 25px;
+      font-size: 16px;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      color: #000000;
+      background: rgba(255, 255, 255, 0.2);
+      border-color: #ffffff;
+    }
+
+    .register {
+      text-align: center;
+      margin-top: 30px;
+      color: #ffffff;
+    }
+  </style>
 </head>
+
 <body>
-
-    <div class="northern-lights"></div> <!-- Северное сияние -->
-
-    <div class="snow-pile"></div> <!-- Сугробы -->
-
-    <div class="snowy-box">
-        <!-- Аватар -->
-        <div class="avatar" id="avatar" style="background-image: url('https://cdn.discordapp.com/avatars/your_user_id/your_avatar_hash.png');"></div>
-        <!-- Никнейм -->
-        <h1 id="username">YourDiscordUsername</h1>
-        <!-- Статус -->
-        <div class="status" id="status">Не беспокоить</div>
-        <!-- Описание -->
-        <div class="description" id="description">
-            Привет! Я разработчик и любитель игр. Увлекаюсь программированием и созданием новых проектов.
-        </div>
-    </div>
-
-    <div class="moon" id="moon"></div> <!-- Луна -->
-
-    <!-- Счётчик просмотров -->
-    <div class="views-counter" id="viewsCounter">Просмотры: 0</div>
-
-    <script>
-        let isDay = false;
-        const maxElements = 50; // Максимальное количество снежинок или листьев на странице
-        let activeElements = 0;
-
-        // Статические данные для Discord
-        const userData = {
-            username: "Фуфлик",  // Ваш никнейм
-            avatarUrl: "https://i.postimg.cc/nrzwz7pT/Untitled-2.png",  // URL вашего аватара
-            status: "Не беспокоить ",  // Статус пользователя
-            description: "🇷🇺 Russia "  // Описание пользователя
-        };
-
-        // Отображение данных из Discord
-        document.getElementById("username").textContent = userData.username;
-        document.getElementById("avatar").style.backgroundImage = `url(${userData.avatarUrl})`;
-        document.getElementById("status").textContent = userData.status;
-        document.getElementById("description").textContent = userData.description;
-
-        // Счётчик просмотров
-        function updateViews() {
-            let views = localStorage.getItem('pageViews');
-            if (!views) {
-                views = 0;
-            }
-            views++;
-            localStorage.setItem('pageViews', views);
-            document.getElementById("viewsCounter").textContent = `Просмотры: ${views}`;
-        }
-
-        // Обновляем счётчик при загрузке страницы
-        updateViews();
-
-        // Генерация снежинок или листьев
-        function createSnowflakeOrLeaf() {
-            if (activeElements >= maxElements) return; // Если уже достигли лимита, не создаем новые элементы
-
-            const element = document.createElement('div');
-            element.className = isDay ? 'leaf' : 'snowflake';
-
-            if (isDay) {
-                element.textContent = '🌿'; // Листья в виде символа
-                element.style.fontSize = Math.random() * 15 + 15 + 'px'; // Разные размеры листьев
-            }
-
-            element.style.left = Math.random() * 100 + 'vw'; // Случайная позиция по оси X
-            element.style.top = '-10px'; // Начальная позиция выше экрана
-            document.body.appendChild(element);
-            activeElements++; // Увеличиваем счетчик активных элементов
-
-            // Анимация падения
-            setTimeout(() => {
-                element.style.transition = 'top 3s linear';
-                element.style.top = '100vh'; // Падение вниз экрана
-
-                // Удаление после падения
-                element.addEventListener('transitionend', () => {
-                    element.remove();
-                    activeElements--; // Уменьшаем счетчик активных элементов
-                });
-            }, 50);
-        }
-
-        // Смена дня и ночи
-        document.getElementById('moon').addEventListener('click', () => {
-            isDay = !isDay;
-
-            if (isDay) {
-                document.body.style.background = 'linear-gradient(to bottom, #87CEEB, #FFFFFF)'; // День
-                document.querySelector('.northern-lights').style.opacity = '0'; // Убираем северное сияние
-                document.getElementById('moon').classList.add('sun'); // Меняем луну на солнце
-                document.querySelector('.snowy-box').style.background = 'rgba(255, 255, 255, 0.8)'; // Светлый фон
-                document.querySelector('.snowy-box').style.boxShadow = '0 0 20px rgba(255, 165, 0, 0.5)';
-                document.querySelector('.snowy-box').style.border = '2px solid #FFA500'; // Оранжевый контур
-                document.querySelector('h1').style.color = '#0000FF'; // Голубой текст при дневном режиме
-            } else {
-                document.body.style.background = 'linear-gradient(to bottom, #000022, #001a33 50%, #003366)'; // Ночь
-                document.querySelector('.northern-lights').style.opacity = '0.7'; // Возвращаем северное сияние
-                document.getElementById('moon').classList.remove('sun'); // Возвращаем солнце на луну
-                document.querySelector('.snowy-box').style.background = 'rgba(0, 0, 0, 0.6)'; // Темный фон
-                document.querySelector('.snowy-box').style.boxShadow = '0 0 20px rgba(0, 204, 255, 0.5)';
-                document.querySelector('.snowy-box').style.border = '2px solid #00CCFF'; // Синий контур
-                document.querySelector('h1').style.color = '#00CCFF'; // Синий текст при ночном режиме
-            }
-        });
-
-        // Генерация снежинок или листьев каждые 1000ms
-        setInterval(createSnowflakeOrLeaf, 1000);
-    </script>
-
+  <div class="wrapper">
+    <form action="#">
+      <h2>Login Form</h2>
+      <div class="input-field">
+        <input type="text" required>
+        <label>Enter your email</label>
+      </div>
+      <div class="input-field">
+        <input type="password" required>
+        <label>Enter your password</label>
+      </div>
+      <div class="forget">
+        <label for="remember">
+          <input type="checkbox" id="remember">
+          <p>Remember me</p>
+        </label>
+        <a href="#">Forgot password?</a>
+      </div>
+      <button type="submit">Log In</button>
+      <div class="register">
+        <p>Don't have an account? <a href="#">Register</a></p>
+      </div>
+    </form>
+  </div>
 </body>
+
 </html>
