@@ -1,0 +1,117 @@
+.reward-container {
+    padding: 20px;
+}
+
+.reward-tabs {
+    background-color: #1A1B1A;
+    padding: 4px;
+    border-radius: 12px;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+}
+
+.reward-tab {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.reward-tab.active {
+    background-color: #262626;
+    color: white;
+}
+
+.reward-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 96px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.reward-item {
+    background-color: #1A1B1A;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.reward-item-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.reward-icon-container {
+    width: 45px;
+    height: 45px;
+    background-color: #262626;
+    border-radius: 8px;
+}
+
+.reward-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.reward-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.reward-title {
+    color: white;
+}
+
+.reward-points {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reward-leaf-icon {
+    width: 12px;
+    height: 17px;
+}
+
+.reward-points-value {
+    color: white;
+}
+
+.reward-item-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.reward-done-button {
+    padding: 8px 24px;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reward-arrow {
+    width: 8px;
+    height: 14px;
+    opacity: 0.4;
+}
