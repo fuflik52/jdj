@@ -1,0 +1,86 @@
+.reward-section {
+    padding: 20px;
+    background: #0D0E0D;
+    height: calc(100vh - 180px);
+    overflow-y: auto;
+}
+
+.reward-section .space-y-3 > div {
+    background: #1A1B1A;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.reward-section img {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.reward-section h3 {
+    color: white;
+    font-size: 16px;
+    margin: 0;
+}
+
+.reward-section p {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    margin: 4px 0;
+}
+
+.buy-button {
+    background: #262626;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.buy-button:not(.purchased):hover {
+    background: #333;
+}
+
+.buy-button.purchased {
+    background: #1A1B1A;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: default;
+}
+
+.new-badge {
+    background: #262626;
+    color: white;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.token-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.price-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+/* Анимации */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.buy-button:not(.purchased):active {
+    animation: pulse 0.2s ease-in-out;
+}
