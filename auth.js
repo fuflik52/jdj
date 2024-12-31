@@ -41,48 +41,51 @@ async function register() {
 
     try {
         // Регистрация пользователя
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        const { data: { user }, error: signUpError } = await supabase.auth.signUp({
             email: `${username}@koalagame.com`,
-            password: password
+            password: password,
+            options: {
+                data: {
+                    username: username
+                }
+            }
         });
 
-        if (authError) throw authError;
+        if (signUpError) throw signUpError;
 
-        // Создание записи в таблице users
-        const { error: userError } = await supabase
-            .from('users')
-            .insert([
-                {
-                    username: username,
-                    web_user: true,
-                    balance: 0,
-                    energy: 100
-                }
-            ]);
+        if (user) {
+            // Создание записи в таблице users
+            const { error: userError } = await supabase
+                .from('users')
+                .insert([
+                    {
+                        id: user.id,
+                        username: username,
+                        web_user: true
+                    }
+                ]);
 
-        if (userError) throw userError;
+            if (userError) throw userError;
 
-        // Создание начального прогресса
-        const { error: progressError } = await supabase
-            .from('user_progress')
-            .insert([
-                {
-                    user_id: authData.user.id,
-                    balance: 0,
-                    energy: 100,
-                    hourly_rate: 10
-                }
-            ]);
+            // Создание начального прогресса
+            const { error: progressError } = await supabase
+                .from('user_progress')
+                .insert([
+                    {
+                        user_id: user.id,
+                        balance: 0,
+                        energy: 100,
+                        hourly_rate: 10
+                    }
+                ]);
 
-        if (progressError) throw progressError;
+            if (progressError) throw progressError;
 
-        // Сохраняем данные пользователя
-        localStorage.setItem('user_id', authData.user.id);
-        localStorage.setItem('username', username);
-
-        // Перенаправляем на игру
-        window.location.href = 'index.html';
+            // Перенаправляем на игру
+            window.location.href = 'index.html';
+        }
     } catch (error) {
+        console.error('Registration error:', error);
         showError(error.message);
     }
 }
@@ -98,20 +101,19 @@ async function login() {
     }
 
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data: { user }, error } = await supabase.auth.signInWithPassword({
             email: `${username}@koalagame.com`,
             password: password
         });
 
         if (error) throw error;
 
-        // Сохраняем данные пользователя
-        localStorage.setItem('user_id', data.user.id);
-        localStorage.setItem('username', username);
-
-        // Перенаправляем на игру
-        window.location.href = 'index.html';
+        if (user) {
+            // Перенаправляем на игру
+            window.location.href = 'index.html';
+        }
     } catch (error) {
+        console.error('Login error:', error);
         showError('Неверное имя пользователя или пароль');
     }
 }
