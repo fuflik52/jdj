@@ -101,14 +101,21 @@ async function login() {
     }
 
     try {
+        // Добавляем console.log для отладки
+        console.log('Attempting login with:', username);
+        
         const { data: { user }, error } = await supabase.auth.signInWithPassword({
-            email: `${username}@koalagame.com`,
+            email: `${username}@koalagame.com`, 
             password: password
         });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Login error:', error);
+            throw error;
+        }
 
         if (user) {
+            console.log('Login successful:', user);
             // Перенаправляем на игру
             window.location.href = 'index.html';
         }
