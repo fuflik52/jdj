@@ -1,4 +1,4 @@
-// Инициализация Supabase
+
 const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4NTM1MTAsImV4cCI6MjAxOTQyOTUxMH0.JVG33zXYj1LxqwboJ3XKpxgikc-1q_wX1R4ORXGkwBE';
 
@@ -160,3 +160,4 @@ async function checkAuth() {
 
 // Проверяем авторизацию при загрузке страницы
 checkAuth();
+ы
