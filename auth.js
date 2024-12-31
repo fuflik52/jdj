@@ -1,7 +1,7 @@
 // Инициализация Supabase
 const supabase = window.supabase.createClient(
     'https://qgalbzidagyazfdvnfll.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM5MzI4NjcsImV4cCI6MjAxOTUwODg2N30.BHZmCqOiXGxbHpLXqbYQxkzpvZOXKKZQIcjkAXBfGXE'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
 );
 
 // Переключение между формами входа и регистрации
@@ -40,7 +40,8 @@ async function register() {
     }
 
     try {
-        // Регистрация пользователя
+        console.log('Attempting registration with:', username);
+        
         const { data: { user }, error: signUpError } = await supabase.auth.signUp({
             email: `${username}@koalagame.com`,
             password: password,
@@ -51,9 +52,14 @@ async function register() {
             }
         });
 
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+            console.error('Registration error:', signUpError);
+            throw signUpError;
+        }
 
         if (user) {
+            console.log('Registration successful:', user);
+            
             // Создание записи в таблице users
             const { error: userError } = await supabase
                 .from('users')
@@ -65,7 +71,10 @@ async function register() {
                     }
                 ]);
 
-            if (userError) throw userError;
+            if (userError) {
+                console.error('User creation error:', userError);
+                throw userError;
+            }
 
             // Создание начального прогресса
             const { error: progressError } = await supabase
@@ -79,7 +88,10 @@ async function register() {
                     }
                 ]);
 
-            if (progressError) throw progressError;
+            if (progressError) {
+                console.error('Progress creation error:', progressError);
+                throw progressError;
+            }
 
             // Перенаправляем на игру
             window.location.href = 'index.html';
@@ -101,11 +113,10 @@ async function login() {
     }
 
     try {
-        // Добавляем console.log для отладки
         console.log('Attempting login with:', username);
         
         const { data: { user }, error } = await supabase.auth.signInWithPassword({
-            email: `${username}@koalagame.com`, 
+            email: `${username}@koalagame.com`,
             password: password
         });
 
@@ -129,7 +140,12 @@ async function login() {
 async function checkAuth() {
     const { data: { session }, error } = await supabase.auth.getSession();
     
+    if (error) {
+        console.error('Auth check error:', error);
+    }
+    
     if (session) {
+        console.log('User is already authenticated:', session);
         window.location.href = 'index.html';
     }
 }
