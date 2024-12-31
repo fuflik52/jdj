@@ -21,9 +21,15 @@ window.toggleForms = function() {
     });
 }
 
+// Валидация email
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
 // Регистрация нового пользователя
 window.register = async function() {
-    const email = document.getElementById('regEmail').value;
+    const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
     const confirmPassword = document.getElementById('regConfirmPassword').value;
     const errorElement = document.getElementById('regErrorMessage');
@@ -40,6 +46,11 @@ window.register = async function() {
         return;
     }
 
+    if (!isValidEmail(email)) {
+        showError('Пожалуйста, введите корректный email адрес');
+        return;
+    }
+
     if (password.length < 6) {
         showError('Пароль должен содержать минимум 6 символов');
         return;
@@ -51,27 +62,79 @@ window.register = async function() {
     }
 
     try {
-        const { data, error } = await window.supabaseClient.auth.signUp({
+        console.log('Attempting registration with email:', email);
+        
+        // Регистрация пользователя
+        const { data: { user }, error: signUpError } = await window.supabaseClient.auth.signUp({
             email: email,
             password: password
         });
 
-        if (error) {
-            showError(error.message);
-        } else {
-            // Успешная регистрация
-            alert('На ваш email отправлено письмо для подтверждения регистрации');
-            window.toggleForms(); // Переключаемся на форму входа
+        if (signUpError) {
+            console.error('Registration error:', signUpError);
+            if (signUpError.message.includes('already registered')) {
+                showError('Этот email уже зарегистрирован');
+            } else {
+                showError(signUpError.message);
+            }
+            return;
+        }
+
+        if (user) {
+            console.log('User registered:', user);
+
+            try {
+                // Создаем запись в таблице users
+                const { error: userError } = await window.supabaseClient
+                    .from('users')
+                    .insert([
+                        {
+                            id: user.id,
+                            email: email,
+                            username: email.split('@')[0]
+                        }
+                    ]);
+
+                if (userError) throw userError;
+
+                // Создаем начальный прогресс пользователя
+                const { error: progressError } = await window.supabaseClient
+                    .from('user_progress')
+                    .insert([
+                        {
+                            user_id: user.id,
+                            balance: 0,
+                            energy: 100,
+                            hourly_rate: 10
+                        }
+                    ]);
+
+                if (progressError) throw progressError;
+
+                // Показываем сообщение об успешной регистрации
+                alert('Регистрация успешна! Теперь вы можете войти в систему.');
+                
+                // Переключаемся на форму входа
+                window.toggleForms();
+                
+                // Очищаем поля формы регистрации
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+                document.getElementById('regConfirmPassword').value = '';
+            } catch (dbError) {
+                console.error('Database error:', dbError);
+                showError('Ошибка при создании профиля. Пожалуйста, попробуйте позже.');
+            }
         }
     } catch (error) {
-        showError('Произошла ошибка при регистрации');
         console.error('Registration error:', error);
+        showError('Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.');
     }
 }
 
 // Вход существующего пользователя
 window.login = async function() {
-    const email = document.getElementById('loginEmail').value;
+    const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     const errorElement = document.getElementById('loginErrorMessage');
 
@@ -86,7 +149,13 @@ window.login = async function() {
         return;
     }
 
+    if (!isValidEmail(email)) {
+        showError('Пожалуйста, введите корректный email адрес');
+        return;
+    }
+
     try {
+        console.log('Attempting login with email:', email);
         const { data, error } = await window.supabaseClient.auth.signInWithPassword({
             email: email,
             password: password
@@ -94,8 +163,6 @@ window.login = async function() {
 
         if (error) {
             console.error('Login error:', error);
-            
-            // Обработка конкретных ошибок
             if (error.message.includes('Invalid login credentials')) {
                 showError('Неверный email или пароль');
             } else if (error.message.includes('Email not confirmed')) {
