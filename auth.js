@@ -1,7 +1,7 @@
 // Инициализация Supabase
 const supabase = window.supabase.createClient(
     'https://qgalbzidagyazfdvnfll.supabase.co',
-    'eyJhbciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM5MzI4NjcsImV4cCI6MjAxOTUwODg2N30.BHZmCqOiXGxbHpLXqbYQxkzpvZOXKKZQIcjkAXBfGXE'
 );
 
 // Переключение между формами входа и регистрации
