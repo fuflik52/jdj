@@ -1,16 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
-
-// Инициализация клиента Supabase
-const supabase = createClient(
-    'https://qgalbzidagyazfdvnfll.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
-);
-
+// База данных игры
 const gameDB = {
     // Инициализация пользователя
     async initUser(telegramUser) {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await window.supabaseClient
                 .from('users')
                 .upsert({
                     telegram_id: telegramUser.id,
@@ -34,7 +27,7 @@ const gameDB = {
     // Загрузка прогресса
     async initProgress() {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await window.supabaseClient
                 .from('game_progress')
                 .select('*')
                 .single();
@@ -50,7 +43,7 @@ const gameDB = {
     // Обновление баланса
     async updateBalance(balance) {
         try {
-            const { error } = await supabase
+            const { error } = await window.supabaseClient
                 .from('users')
                 .update({ balance })
                 .eq('telegram_id', window.tg.initDataUnsafe.user.id);
@@ -66,7 +59,7 @@ const gameDB = {
     // Обновление энергии
     async updateEnergy(energy) {
         try {
-            const { error } = await supabase
+            const { error } = await window.supabaseClient
                 .from('users')
                 .update({ energy })
                 .eq('telegram_id', window.tg.initDataUnsafe.user.id);
@@ -82,7 +75,7 @@ const gameDB = {
     // Получение всех карточек
     async getCards() {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await window.supabaseClient
                 .from('cards')
                 .select('*')
                 .order('price');
@@ -98,7 +91,7 @@ const gameDB = {
     // Получение купленных карточек
     async getPurchasedCards() {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await window.supabaseClient
                 .from('purchased_cards')
                 .select(`
                     *,
@@ -107,7 +100,7 @@ const gameDB = {
                 .eq('user_id', window.tg.initDataUnsafe.user.id);
 
             if (error) throw error;
-            return data.map(pc => pc.cards);
+            return data;
         } catch (error) {
             console.error('Error getting purchased cards:', error);
             return [];
@@ -118,27 +111,27 @@ const gameDB = {
     async purchaseCard(cardId) {
         try {
             // Начинаем транзакцию
-            const { data: { user_id } } = await supabase.auth.getUser();
+            const { data: { user_id } } = await window.supabaseClient.auth.getUser();
             
             // Получаем карточку и проверяем баланс
-            const { data: card } = await supabase
+            const { data: card } = await window.supabaseClient
                 .from('cards')
                 .select('*')
                 .eq('id', cardId)
                 .single();
 
-            const { data: user } = await supabase
+            const { data: user } = await window.supabaseClient
                 .from('users')
                 .select('balance')
                 .eq('telegram_id', window.tg.initDataUnsafe.user.id)
                 .single();
 
             if (user.balance < card.price) {
-                throw new Error('Insufficient funds');
+                throw new Error('Недостаточно средств');
             }
 
             // Покупаем карточку и обновляем баланс
-            const { error: purchaseError } = await supabase
+            const { error: purchaseError } = await window.supabaseClient
                 .from('purchased_cards')
                 .insert({
                     user_id: window.tg.initDataUnsafe.user.id,
@@ -148,17 +141,23 @@ const gameDB = {
             if (purchaseError) throw purchaseError;
 
             // Обновляем баланс пользователя
-            const { error: balanceError } = await supabase
+            const { error: balanceError } = await window.supabaseClient
                 .from('users')
                 .update({ balance: user.balance - card.price })
                 .eq('telegram_id', window.tg.initDataUnsafe.user.id);
 
             if (balanceError) throw balanceError;
 
-            return true;
+            return {
+                success: true,
+                card: card
+            };
         } catch (error) {
             console.error('Error purchasing card:', error);
-            return false;
+            return {
+                success: false,
+                error: error.message
+            };
         }
     },
 
@@ -167,13 +166,14 @@ const gameDB = {
         try {
             const purchasedCards = await this.getPurchasedCards();
             const baseRate = 10;
-            const totalRate = purchasedCards.reduce((sum, card) => sum + card.per_hour, baseRate);
+            const totalRate = purchasedCards.reduce((sum, pc) => sum + pc.cards.per_hour, baseRate);
             return totalRate;
         } catch (error) {
             console.error('Error calculating hourly rate:', error);
-            return 10; // Базовая ставка в случае ошибки
+            return 10; // Возвращаем базовую ставку в случае ошибки
         }
     }
 };
 
-export default gameDB;
+// Делаем gameDB доступным глобально
+window.gameDB = gameDB;

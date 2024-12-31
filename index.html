@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,8 +7,6 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="sections.css">
     <link rel="stylesheet" href="reward.css">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="mobile-frame">
@@ -90,11 +88,24 @@
             </nav>
         </div>
     </div>
-    <script src="db.js" type="module"></script>
-    <script src="script.js" type="module"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Глобальные объекты
+        window.tg = window.Telegram.WebApp;
+        window.tg.expand();
+        
+        // Инициализация Supabase
+        window.supabaseClient = supabase.createClient(
+            'https://qgalbzidagyazfdvnfll.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
+        );
+    </script>
     <script src="telegram.js"></script>
     <script src="background.js"></script>
     <script src="snow.js"></script>
+    <script src="db.js"></script>
+    <script src="script.js"></script>
     <script>
         // Проверяем, пришли ли мы с loading.html
         if (!sessionStorage.getItem('loaded')) {
