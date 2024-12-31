@@ -52,15 +52,9 @@ window.register = async function() {
 
     try {
         // Регистрация пользователя
-        const { data: { user }, error: signUpError } = await window.supabaseClient.auth.signUp({
+        const { data, error: signUpError } = await window.supabaseClient.auth.signUp({
             email: email,
-            password: password,
-            options: {
-                data: {
-                    email: email,
-                    username: email.split('@')[0]
-                }
-            }
+            password: password
         });
 
         if (signUpError) {
@@ -69,14 +63,27 @@ window.register = async function() {
             return;
         }
 
-        if (user) {
+        if (data.user) {
+            // Автоматически входим после регистрации
+            const { error: signInError } = await window.supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (signInError) {
+                console.error('Sign in error:', signInError);
+                showError('Регистрация успешна, но возникла ошибка при входе. Попробуйте войти вручную.');
+                window.toggleForms();
+                return;
+            }
+
             try {
                 // Создаем запись в таблице users
                 const { error: userError } = await window.supabaseClient
                     .from('users')
                     .insert([
                         {
-                            id: user.id,
+                            id: data.user.id,
                             email: email,
                             username: email.split('@')[0]
                         }
@@ -84,7 +91,6 @@ window.register = async function() {
 
                 if (userError) {
                     console.error('User creation error:', userError);
-                    throw userError;
                 }
 
                 // Создаем начальный прогресс пользователя
@@ -92,7 +98,7 @@ window.register = async function() {
                     .from('user_progress')
                     .insert([
                         {
-                            user_id: user.id,
+                            user_id: data.user.id,
                             balance: 0,
                             energy: 100,
                             hourly_rate: 10
@@ -101,19 +107,10 @@ window.register = async function() {
 
                 if (progressError) {
                     console.error('Progress creation error:', progressError);
-                    throw progressError;
                 }
 
-                // Показываем сообщение об успешной регистрации
-                alert('Регистрация успешна! Теперь вы можете войти в систему.');
-                
-                // Переключаемся на форму входа
-                window.toggleForms();
-                
-                // Очищаем поля формы регистрации
-                document.getElementById('regEmail').value = '';
-                document.getElementById('regPassword').value = '';
-                document.getElementById('regConfirmPassword').value = '';
+                // Перенаправляем на главную страницу
+                window.location.href = 'index.html';
             } catch (dbError) {
                 console.error('Database error:', dbError);
                 showError('Ошибка при создании профиля. Пожалуйста, попробуйте позже.');
@@ -176,3 +173,4 @@ window.checkAuth = async function() {
         console.error('Auth check error:', error);
     }
 }
+
