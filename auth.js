@@ -123,18 +123,6 @@ window.register = async function() {
             console.log('User created:', user);
 
             try {
-                // Проверяем, существует ли пользователь с таким email
-                const { data: existingUser } = await window.supabaseClient
-                    .from('users')
-                    .select('email')
-                    .eq('email', email)
-                    .single();
-
-                if (existingUser) {
-                    showError('Пользователь с таким email уже существует');
-                    return;
-                }
-
                 // Создаем запись в таблице users
                 console.log('Creating user record...');
                 const { error: userError } = await window.supabaseClient
@@ -231,30 +219,8 @@ window.login = async function() {
             const testUser = JSON.parse(localStorage.getItem('testUser') || '{}');
             if (testUser.email === email && testUser.password === password) {
                 // Получаем данные пользователя из базы
-                const { data: userData, error: userError } = await window.supabaseClient
-                    .from('users')
-                    .select('*')
-                    .eq('id', testUser.id)
-                    .single();
-
-                if (userError) {
-                    console.error('Error fetching user data:', userError);
-                    showError('Ошибка при получении данных пользователя');
-                    return;
-                }
-
-                // Получаем прогресс пользователя
-                const { data: progressData, error: progressError } = await window.supabaseClient
-                    .from('user_progress')
-                    .select('*')
-                    .eq('user_id', testUser.id)
-                    .single();
-
-                if (progressError) {
-                    console.error('Error fetching progress:', progressError);
-                    showError('Ошибка при получении данных прогресса');
-                    return;
-                }
+                const userData = await window.gameDB.getUserData(testUser.id);
+                const progressData = await window.gameDB.getUserProgress(testUser.id);
 
                 // Сохраняем данные пользователя
                 localStorage.setItem('currentUser', JSON.stringify({
@@ -289,31 +255,8 @@ window.login = async function() {
                 console.log('Login successful:', data.user);
 
                 try {
-                    // Получаем данные пользователя
-                    const { data: userData, error: userError } = await window.supabaseClient
-                        .from('users')
-                        .select('*')
-                        .eq('id', data.user.id)
-                        .single();
-
-                    if (userError) {
-                        console.error('Error fetching user data:', userError);
-                        showError('Ошибка при получении данных пользователя');
-                        return;
-                    }
-
-                    // Получаем прогресс пользователя
-                    const { data: progressData, error: progressError } = await window.supabaseClient
-                        .from('user_progress')
-                        .select('*')
-                        .eq('user_id', data.user.id)
-                        .single();
-
-                    if (progressError) {
-                        console.error('Error fetching progress:', progressError);
-                        showError('Ошибка при получении данных прогресса');
-                        return;
-                    }
+                    const userData = await window.gameDB.getUserData(data.user.id);
+                    const progressData = await window.gameDB.getUserProgress(data.user.id);
 
                     // Сохраняем данные пользователя
                     localStorage.setItem('currentUser', JSON.stringify({
