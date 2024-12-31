@@ -8,6 +8,14 @@ window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: true
+    },
+    db: {
+        schema: 'public'
+    },
+    global: {
+        headers: {
+            'apikey': SUPABASE_ANON_KEY
+        }
     }
 });
 
@@ -161,6 +169,106 @@ class GameDB {
             window.location.href = 'login.html';
         } catch (error) {
             console.error('Error during logout:', error);
+            throw error;
+        }
+    }
+
+    // Получение данных пользователя
+    async getUserData(userId) {
+        try {
+            const { data, error } = await this.supabase
+                .from('users')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Error getting user data:', error);
+            throw error;
+        }
+    }
+
+    // Получение прогресса пользователя
+    async getUserProgressById(userId) {
+        try {
+            const { data, error } = await this.supabase
+                .from('user_progress')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Error getting user progress:', error);
+            throw error;
+        }
+    }
+
+    // Обновление прогресса пользователя
+    async updateUserProgress(userId, updates) {
+        try {
+            const { data, error } = await this.supabase
+                .from('user_progress')
+                .update(updates)
+                .eq('user_id', userId);
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Error updating user progress:', error);
+            throw error;
+        }
+    }
+
+    // Создание пользователя
+    async createUser(userData) {
+        try {
+            const { data, error } = await this.supabase
+                .from('users')
+                .insert([userData])
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Error creating user:', error);
+            throw error;
+        }
+    }
+
+    // Создание прогресса пользователя
+    async createUserProgress(progressData) {
+        try {
+            const { data, error } = await this.supabase
+                .from('user_progress')
+                .insert([progressData])
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Error creating user progress:', error);
+            throw error;
+        }
+    }
+
+    // Проверка существования пользователя
+    async checkUserExists(email) {
+        try {
+            const { data, error } = await this.supabase
+                .from('users')
+                .select('id')
+                .eq('email', email);
+
+            if (error) throw error;
+            return data && data.length > 0;
+        } catch (error) {
+            console.error('Error checking user existence:', error);
             throw error;
         }
     }

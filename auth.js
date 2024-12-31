@@ -124,59 +124,32 @@ window.register = async function() {
             console.log('User created:', user);
 
             try {
-                // Проверяем, существует ли пользователь с таким email
+                // Проверяем существование пользователя
                 console.log('Checking for existing user...');
-                const { data: existingUsers, error: checkError } = await window.supabaseClient
-                    .from('users')
-                    .select('id')
-                    .eq('email', email);
-
-                if (checkError) {
-                    console.error('Error checking existing user:', checkError);
-                    throw checkError;
-                }
-
-                if (existingUsers && existingUsers.length > 0) {
+                const exists = await window.gameDB.checkUserExists(email);
+                if (exists) {
                     showError('Пользователь с таким email уже существует');
                     return;
                 }
 
-                // Создаем запись в таблице users
+                // Создаем пользователя
                 console.log('Creating user record...');
-                const { error: userError } = await window.supabaseClient
-                    .from('users')
-                    .insert([
-                        {
-                            id: user.id,
-                            email: email,
-                            username: email.split('@')[0]
-                        }
-                    ]);
-
-                if (userError) {
-                    console.error('User record creation error:', userError);
-                    throw userError;
-                }
+                const userData = await window.gameDB.createUser({
+                    id: user.id,
+                    email: email,
+                    username: email.split('@')[0]
+                });
 
                 console.log('User record created successfully');
 
-                // Создаем запись в таблице user_progress
+                // Создаем прогресс пользователя
                 console.log('Creating user progress...');
-                const { error: progressError } = await window.supabaseClient
-                    .from('user_progress')
-                    .insert([
-                        {
-                            user_id: user.id,
-                            balance: 0,
-                            energy: 100,
-                            hourly_rate: 10
-                        }
-                    ]);
-
-                if (progressError) {
-                    console.error('Progress creation error:', progressError);
-                    throw progressError;
-                }
+                const progressData = await window.gameDB.createUserProgress({
+                    user_id: user.id,
+                    balance: 0,
+                    energy: 100,
+                    hourly_rate: 10
+                });
 
                 console.log('User progress created successfully');
 
