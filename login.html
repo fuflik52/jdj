@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Koala Game - Login</title>
+    <!-- Добавляем Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -71,6 +73,7 @@
         .toggle-form a {
             color: #4CAF50;
             text-decoration: none;
+            cursor: pointer;
         }
 
         .error-message {
@@ -79,10 +82,15 @@
             text-align: center;
             display: none;
         }
+
+        #registerForm {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
+        <!-- Форма входа -->
         <div id="loginForm">
             <h2>Вход в игру</h2>
             <div class="form-group">
@@ -95,11 +103,12 @@
             </div>
             <button onclick="login()">Войти</button>
             <div class="toggle-form">
-                Нет аккаунта? <a href="#" onclick="toggleForms()">Зарегистрироваться</a>
+                Нет аккаунта? <a onclick="toggleForms()">Зарегистрироваться</a>
             </div>
         </div>
 
-        <div id="registerForm" style="display: none;">
+        <!-- Форма регистрации -->
+        <div id="registerForm">
             <h2>Регистрация</h2>
             <div class="form-group">
                 <label for="regUsername">Имя пользователя</label>
@@ -115,13 +124,15 @@
             </div>
             <button onclick="register()">Зарегистрироваться</button>
             <div class="toggle-form">
-                Уже есть аккаунт? <a href="#" onclick="toggleForms()">Войти</a>
+                Уже есть аккаунт? <a onclick="toggleForms()">Войти</a>
             </div>
         </div>
-        <div id="errorMessage" class="error-message"></div>
     </div>
 
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Сообщение об ошибке -->
+    <div id="errorMessage" class="error-message"></div>
+
+    <!-- Скрипты -->
     <script src="auth.js"></script>
 </body>
 </html>
