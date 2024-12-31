@@ -29,6 +29,13 @@ window.toggleForms = function() {
     });
 }
 
+// Функция для проверки email
+function isValidEmail(email) {
+    // Базовая проверка формата email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
 // Регистрация нового пользователя
 window.register = async function() {
     const email = document.getElementById('regEmail').value.trim();
@@ -48,8 +55,18 @@ window.register = async function() {
         return;
     }
 
+    if (!isValidEmail(email)) {
+        showError('Пожалуйста, введите корректный email адрес');
+        return;
+    }
+
     if (password.length < 6) {
         showError('Пароль должен содержать минимум 6 символов');
+        return;
+    }
+
+    if (password.length > 72) {
+        showError('Пароль не может быть длиннее 72 символов');
         return;
     }
 
@@ -64,13 +81,20 @@ window.register = async function() {
         // Создаем пользователя через Supabase Auth
         const { data: authData, error: signUpError } = await window.supabaseClient.auth.signUp({
             email: email,
-            password: password
+            password: password,
+            options: {
+                data: {
+                    username: email.split('@')[0]
+                }
+            }
         });
 
         if (signUpError) {
             console.error('Auth error:', signUpError);
             if (signUpError.message.includes('rate limit')) {
                 showError('Превышен лимит регистраций. Пожалуйста, попробуйте позже.');
+            } else if (signUpError.message.includes('invalid')) {
+                showError('Пожалуйста, используйте реальный email адрес');
             } else {
                 showError(signUpError.message);
             }
@@ -95,7 +119,11 @@ window.register = async function() {
 
                 if (userError) {
                     console.error('User record creation error:', userError);
-                    showError('Ошибка при создании пользователя. Пожалуйста, попробуйте позже.');
+                    if (userError.message.includes('duplicate key')) {
+                        showError('Пользователь с таким email уже существует');
+                    } else {
+                        showError('Ошибка при создании пользователя. Пожалуйста, попробуйте позже.');
+                    }
                     return;
                 }
 
