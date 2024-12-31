@@ -26,12 +26,24 @@ function showError(message, isRegistration = false) {
 
 // Регистрация нового пользователя
 async function register() {
+    const email = document.getElementById('regEmail').value;
     const username = document.getElementById('regUsername').value;
     const password = document.getElementById('regPassword').value;
     const confirmPassword = document.getElementById('regConfirmPassword').value;
 
-    if (!username || !password) {
+    // Валидация
+    if (!email || !username || !password || !confirmPassword) {
         showError('Пожалуйста, заполните все поля', true);
+        return;
+    }
+
+    if (username.length < 3) {
+        showError('Имя пользователя должно содержать минимум 3 символа', true);
+        return;
+    }
+
+    if (password.length < 6) {
+        showError('Пароль должен содержать минимум 6 символов', true);
         return;
     }
 
@@ -41,11 +53,11 @@ async function register() {
     }
 
     try {
-        console.log('Attempting registration with:', username);
+        console.log('Attempting registration with:', email);
         
         // Регистрация пользователя
         const { data: { user }, error: signUpError } = await supabase.auth.signUp({
-            email: `${username}@example.com`,  // Используем фиксированный домен
+            email: email,
             password: password,
             options: {
                 data: {
@@ -69,6 +81,7 @@ async function register() {
                     {
                         id: user.id,
                         username: username,
+                        email: email,
                         web_user: true
                     }
                 ]);
@@ -95,12 +108,21 @@ async function register() {
                 throw progressError;
             }
 
-            // Перенаправляем на игру
-            window.location.href = 'index.html';
+            // Показываем сообщение об успешной регистрации
+            showError('Регистрация успешна! Проверьте вашу почту для подтверждения.', true);
+            
+            // Через 2 секунды переключаемся на форму входа
+            setTimeout(() => {
+                toggleForms();
+            }, 2000);
         }
     } catch (error) {
         console.error('Registration error:', error);
-        showError(error.message, true);
+        if (error.message.includes('duplicate key')) {
+            showError('Пользователь с таким email уже существует', true);
+        } else {
+            showError(error.message, true);
+        }
     }
 }
 
