@@ -1,198 +1,191 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loading - Koala Game</title>
+    <title>Koala Game - Login</title>
+    <!-- Добавляем Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Добавляем Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Инициализация Supabase
+        const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4NTM1MTAsImV4cCI6MjAxOTQyOTUxMH0.JVG33zXYj1LxqwboJ3XKpxgikc-1q_wX1R4ORXGkwBE';
+        window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Проверяем, является ли пользователь пользователем Telegram
+        window.tg = window.Telegram ? window.Telegram.WebApp : null;
+        const isTelegramUser = window.tg && window.tg.initDataUnsafe && window.tg.initDataUnsafe.user;
+
+        if (isTelegramUser) {
+            // Если пользователь из Telegram, перенаправляем на главную страницу
+            window.location.href = 'index.html';
+        } else {
+            // Проверяем, авторизован ли веб-пользователь
+            async function checkAuth() {
+                try {
+                    const { data: { user } } = await window.supabase.auth.getUser();
+                    if (user) {
+                        window.location.href = 'index.html';
+                    }
+                } catch (error) {
+                    console.error('Auth check error:', error);
+                }
+            }
+            checkAuth();
+        }
+    </script>
     <style>
         body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #1A2C1A;
-            color: white;
-            font-family: Arial, sans-serif;
-            height: 100vh;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-image: url('https://i.postimg.cc/NfRtgtgN/bg.png');
-            background-size: cover;
-            background-position: center;
-            position: relative;
+            min-height: 100vh;
+            background: #1a1b1a;
+            color: white;
         }
 
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1;
+        .login-container {
+            background: #262626;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 400px;
         }
 
-        .loading-container {
-            position: relative;
-            z-index: 2;
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ccc;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #444;
+            border-radius: 0.5rem;
+            background: #333;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #4CAF50;
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .toggle-form {
             text-align: center;
-            background: rgba(26, 44, 26, 0.8);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-top: 1rem;
+            color: #888;
         }
 
-        .loading-text {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #28a745;
-            text-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        .toggle-form a {
+            color: #4CAF50;
+            text-decoration: none;
+            cursor: pointer;
         }
 
-        .loading-steps {
-            text-align: left;
-            margin-top: 20px;
+        .error-message {
+            color: #ff6b6b;
+            margin: 1rem 0;
+            text-align: center;
         }
 
-        .step {
-            margin: 15px 0;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s ease;
-            font-size: 18px;
+        #registerForm {
             display: none;
         }
 
-        .step.visible {
-            display: block;
-            opacity: 0;
-        }
-
-        .step.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .step.completed {
-            color: #28a745;
-        }
-
-        .step.completed::after {
-            content: " ✓";
-            color: #28a745;
-            margin-left: 10px;
-            animation: checkmark 0.5s ease-in-out;
-        }
-
-        .koala-image {
-            width: 150px;
-            height: 150px;
-            margin-bottom: 20px;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        @keyframes checkmark {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.5); }
-            100% { transform: scale(1); }
-        }
-
-        .progress-bar {
-            width: 200px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            margin: 20px auto;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background: #28a745;
-            width: 0%;
-            transition: width 0.5s ease;
+        .info-text {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
 <body>
-    <div class="loading-container">
-        <img src="https://i.postimg.cc/ZnggtH7v/image.png" alt="Koala" class="koala-image">
-        <div class="loading-text">LOADING</div>
-        <div class="progress-bar">
-            <div class="progress-bar-fill"></div>
-        </div>
-        <div class="loading-steps">
-            <div class="step" id="step1">Загрузка ресурсов...</div>
-            <div class="step" id="step2">Подготовка интерфейса...</div>
-            <div class="step" id="step3">Инициализация игры...</div>
-            <div class="step" id="step4">Почти готово...</div>
-        </div>
+    <div class="login-container">
+        <!-- Форма входа -->
+        <form id="loginForm">
+            <h2>Вход в игру</h2>
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Пароль</label>
+                <input type="password" id="loginPassword" required>
+            </div>
+            <div id="loginErrorMessage" class="error-message"></div>
+            <button type="button" onclick="login()">Войти</button>
+            <div class="toggle-form">
+                Нет аккаунта? <a onclick="toggleForms()">Зарегистрироваться</a>
+            </div>
+        </form>
+
+        <!-- Форма регистрации -->
+        <form id="registerForm">
+            <h2>Регистрация</h2>
+            <div class="form-group">
+                <label for="regEmail">Email</label>
+                <input type="email" id="regEmail" required>
+                <div class="info-text">Используйте реальный email для подтверждения</div>
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Пароль</label>
+                <input type="password" id="regPassword" required placeholder="Минимум 6 символов">
+            </div>
+            <div class="form-group">
+                <label for="regConfirmPassword">Подтвердите пароль</label>
+                <input type="password" id="regConfirmPassword" required>
+            </div>
+            <div id="regErrorMessage" class="error-message"></div>
+            <button type="button" onclick="register()">Зарегистрироваться</button>
+            <div class="toggle-form">
+                Уже есть аккаунт? <a onclick="toggleForms()">Войти</a>
+            </div>
+        </form>
     </div>
+
+    <script src="auth.js"></script>
     <script>
-        let currentStep = 1;
-        const totalSteps = 4;
-        const stepDelay = 1500;
-        
-        function showStep(stepNumber) {
-            const step = document.getElementById(`step${stepNumber}`);
-            step.classList.add('visible');
-            setTimeout(() => {
-                step.classList.add('active');
-            }, 100);
-        }
-
-        function completeStep(stepNumber) {
-            const step = document.getElementById(`step${stepNumber}`);
-            step.classList.add('completed');
-        }
-
-        function updateProgressBar(progress) {
-            document.querySelector('.progress-bar-fill').style.width = `${progress}%`;
-        }
-
-        function startLoading() {
-            showStep(1);
+        function toggleForms() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
             
-            setTimeout(() => {
-                completeStep(1);
-                updateProgressBar(25);
-                showStep(2);
-                
-                setTimeout(() => {
-                    completeStep(2);
-                    updateProgressBar(50);
-                    showStep(3);
-                    
-                    setTimeout(() => {
-                        completeStep(3);
-                        updateProgressBar(75);
-                        showStep(4);
-                        
-                        setTimeout(() => {
-                            completeStep(4);
-                            updateProgressBar(100);
-                            
-                            setTimeout(() => {
-                                sessionStorage.setItem('loaded', 'true');
-                                window.location.href = 'index.html';
-                            }, 1000);
-                        }, stepDelay);
-                    }, stepDelay);
-                }, stepDelay);
-            }, stepDelay);
-        }
+            if (loginForm.style.display === 'none') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
 
-        window.onload = startLoading;
+            // Очистка сообщений об ошибках при переключении форм
+            document.querySelectorAll('.error-message').forEach(msg => {
+                msg.textContent = '';
+            });
+        }
     </script>
 </body>
 </html>

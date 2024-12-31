@@ -1,8 +1,12 @@
+// Инициализация Supabase
+const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4NTM1MTAsImV4cCI6MjAxOTQyOTUxMH0.JVG33zXYj1LxqwboJ3XKpxgikc-1q_wX1R4ORXGkwBE';
+window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // Класс для работы с базой данных
 class GameDB {
     constructor() {
-        // Инициализация Supabase
-        this.supabase = window.supabase;
+        // Инициализация
         this.currentUser = null;
         this.isTelegramUser = window.tg && window.tg.initDataUnsafe && window.tg.initDataUnsafe.user;
     }
@@ -17,7 +21,7 @@ class GameDB {
             if (this.isTelegramUser) {
                 // Для пользователей Telegram
                 const telegramUser = window.tg.initDataUnsafe.user;
-                const { data: users, error } = await this.supabase
+                const { data: users, error } = await window.supabase
                     .from('users')
                     .select('*')
                     .eq('telegram_id', telegramUser.id)
@@ -27,7 +31,7 @@ class GameDB {
 
                 if (!users) {
                     // Создаем нового пользователя
-                    const { data: newUser, error: createError } = await this.supabase
+                    const { data: newUser, error: createError } = await window.supabase
                         .from('users')
                         .insert([
                             {
@@ -44,7 +48,7 @@ class GameDB {
                     if (createError) throw createError;
 
                     // Создаем начальный прогресс
-                    await this.supabase
+                    await window.supabase
                         .from('user_progress')
                         .insert([
                             {
@@ -61,11 +65,11 @@ class GameDB {
                 }
             } else {
                 // Для веб пользователей
-                const { data: { user }, error: authError } = await this.supabase.auth.getUser();
+                const { data: { user }, error: authError } = await window.supabase.auth.getUser();
                 if (authError) throw authError;
                 if (!user) throw new Error('User not authenticated');
 
-                const { data: userData, error: userError } = await this.supabase
+                const { data: userData, error: userError } = await window.supabase
                     .from('users')
                     .select('*')
                     .eq('id', user.id)
@@ -86,7 +90,7 @@ class GameDB {
     async getUserProgress() {
         try {
             const user = await this.getCurrentUser();
-            const { data: progress, error } = await this.supabase
+            const { data: progress, error } = await window.supabase
                 .from('user_progress')
                 .select('*')
                 .eq('user_id', user.id)
@@ -104,7 +108,7 @@ class GameDB {
     async updateBalance(newBalance) {
         try {
             const user = await this.getCurrentUser();
-            const { error } = await this.supabase
+            const { error } = await window.supabase
                 .from('user_progress')
                 .update({ balance: newBalance })
                 .eq('user_id', user.id);
@@ -120,7 +124,7 @@ class GameDB {
     async updateEnergy(newEnergy) {
         try {
             const user = await this.getCurrentUser();
-            const { error } = await this.supabase
+            const { error } = await window.supabase
                 .from('user_progress')
                 .update({ energy: newEnergy })
                 .eq('user_id', user.id);
@@ -135,7 +139,7 @@ class GameDB {
     // Выход из системы
     async logout() {
         try {
-            const { error } = await this.supabase.auth.signOut();
+            const { error } = await window.supabase.auth.signOut();
             if (error) throw error;
             window.location.href = 'login.html';
         } catch (error) {
@@ -147,9 +151,3 @@ class GameDB {
 
 // Создаем глобальный экземпляр GameDB
 window.gameDB = new GameDB();
-
-// Инициализация Supabase клиента
-const supabase = window.supabase.createClient(
-    'https://qgalbzidagyazfdvnfll.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
-);
