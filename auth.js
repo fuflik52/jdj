@@ -50,7 +50,7 @@ async function register() {
         console.log('Attempting registration with:', email);
         
         // Регистрация пользователя
-        const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+        const { data: { user }, error: signUpError } = await window.supabase.auth.signUp({
             email: email,
             password: password
         });
@@ -64,7 +64,7 @@ async function register() {
             console.log('Registration successful:', user);
             
             // Создание записи в таблице users
-            const { error: userError } = await supabase
+            const { error: userError } = await window.supabase
                 .from('users')
                 .insert([
                     {
@@ -81,7 +81,7 @@ async function register() {
             }
 
             // Создание начального прогресса
-            const { error: progressError } = await supabase
+            const { error: progressError } = await window.supabase
                 .from('user_progress')
                 .insert([
                     {
@@ -128,7 +128,7 @@ async function login() {
     try {
         console.log('Attempting login with:', email);
         
-        const { data: { user }, error } = await supabase.auth.signInWithPassword({
+        const { data: { user }, error } = await window.supabase.auth.signInWithPassword({
             email: email,
             password: password
         });
@@ -151,7 +151,7 @@ async function login() {
 
 // Проверка авторизации
 async function checkAuth() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await window.supabase.auth.getUser();
     if (!user) {
         window.location.href = 'login.html';
     }

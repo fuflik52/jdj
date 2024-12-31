@@ -7,22 +7,8 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="sections.css">
     <link rel="stylesheet" href="reward.css">
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script>
-        // Инициализация Supabase
-        const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4NTM1MTAsImV4cCI6MjAxOTQyOTUxMH0.JVG33zXYj1LxqwboJ3XKpxgikc-1q_wX1R4ORXGkwBE';
-        window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Проверка авторизации
-        async function checkAuth() {
-            const { data: { user } } = await window.supabase.auth.getUser();
-            if (!user) {
-                window.location.href = 'login.html';
-            }
-            return user;
-        }
-    </script>
+    <!-- Добавляем Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="mobile-frame">
@@ -101,7 +87,7 @@
                     <img src="https://i.postimg.cc/XY2s6m15/image.png" alt="Reward" class="nav-icon">
                     <span>Reward</span>
                 </a>
-                <a href="#" class="nav-item" onclick="window.gameDB.logout()">
+                <a href="#" class="nav-item" onclick="logout()">
                     <img src="https://i.postimg.cc/XY2s6m15/image.png" alt="Logout" class="nav-icon">
                     <span>Выход</span>
                 </a>
@@ -109,10 +95,41 @@
         </div>
     </div>
 
+    <!-- Скрипты -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
+        // Инициализация Supabase
+        const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4NTM1MTAsImV4cCI6MjAxOTQyOTUxMH0.JVG33zXYj1LxqwboJ3XKpxgikc-1q_wX1R4ORXGkwBE';
+        window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // Глобальные объекты Telegram
         window.tg = window.Telegram ? window.Telegram.WebApp : null;
+
+        // Функция выхода
+        async function logout() {
+            try {
+                const { error } = await window.supabase.auth.signOut();
+                if (error) throw error;
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Error during logout:', error);
+            }
+        }
+
+        // Проверка авторизации
+        async function checkAuth() {
+            try {
+                const { data: { user } } = await window.supabase.auth.getUser();
+                if (!user) {
+                    window.location.href = 'login.html';
+                }
+                return user;
+            } catch (error) {
+                console.error('Auth error:', error);
+                window.location.href = 'login.html';
+            }
+        }
     </script>
     <script src="db.js"></script>
     <script src="script.js"></script>
