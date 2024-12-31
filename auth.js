@@ -26,13 +26,12 @@ function showError(message, isRegistration = false) {
 
 // Регистрация нового пользователя
 async function register() {
-    const email = document.getElementById('regEmail').value;
     const username = document.getElementById('regUsername').value;
     const password = document.getElementById('regPassword').value;
     const confirmPassword = document.getElementById('regConfirmPassword').value;
 
     // Валидация
-    if (!email || !username || !password || !confirmPassword) {
+    if (!username || !password || !confirmPassword) {
         showError('Пожалуйста, заполните все поля', true);
         return;
     }
@@ -51,6 +50,8 @@ async function register() {
         showError('Пароли не совпадают', true);
         return;
     }
+
+    const email = `${username}@example.com`;
 
     try {
         console.log('Attempting registration with:', email);
@@ -81,10 +82,10 @@ async function register() {
                     {
                         id: user.id,
                         username: username,
-                        email: email,
                         web_user: true
                     }
-                ]);
+                ])
+                .select('id, username, web_user');
 
             if (userError) {
                 console.error('User creation error:', userError);
@@ -109,7 +110,7 @@ async function register() {
             }
 
             // Показываем сообщение об успешной регистрации
-            showError('Регистрация успешна! Проверьте вашу почту для подтверждения.', true);
+            showError('Регистрация успешна! Теперь вы можете войти.', true);
             
             // Через 2 секунды переключаемся на форму входа
             setTimeout(() => {
@@ -119,7 +120,7 @@ async function register() {
     } catch (error) {
         console.error('Registration error:', error);
         if (error.message.includes('duplicate key')) {
-            showError('Пользователь с таким email уже существует', true);
+            showError('Пользователь с таким именем уже существует', true);
         } else {
             showError(error.message, true);
         }
@@ -140,7 +141,7 @@ async function login() {
         console.log('Attempting login with:', username);
         
         const { data: { user }, error } = await supabase.auth.signInWithPassword({
-            email: 'test2@example.com',  // Используем тестовый email
+            email: username + '@example.com',
             password: password
         });
 

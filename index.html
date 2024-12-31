@@ -1,242 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Koala Game</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Добавляем Supabase -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- Telegram Web App -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        /* Основные стили */
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            background-color: #1a1b1a;
-            color: white;
-        }
-
-        /* Контейнер игры */
-        .game-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #262626;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        /* Статистика */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .stat-box {
-            background-color: #333;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            color: #888;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #4CAF50;
-        }
-
-        /* Кнопки действий */
-        .actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        button {
-            padding: 15px;
-            border: none;
-            border-radius: 8px;
-            background-color: #4CAF50;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        button:disabled {
-            background-color: #666;
-            cursor: not-allowed;
-        }
-
-        /* Достижения */
-        .achievements {
-            margin-top: 30px;
-        }
-
-        .achievement {
-            background-color: #333;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .achievement-locked {
-            opacity: 0.5;
-        }
-
-        /* Прогресс бар */
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background-color: #333;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background-color: #4CAF50;
-            transition: width 0.3s ease;
-        }
-
-        /* Модальное окно */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            z-index: 1000;
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #262626;
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 500px;
-            width: 90%;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #888;
-        }
-
-        /* Анимации */
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .pulse {
-            animation: pulse 0.5s ease;
-        }
-    </style>
+    <title>Koala Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="sections.css">
+    <link rel="stylesheet" href="reward.css">
 </head>
 <body>
-    <div class="game-container">
-        <!-- Статистика -->
-        <div class="stats">
-            <div class="stat-box">
-                <div class="stat-label">Баланс</div>
-                <div class="stat-value" id="balance">0</div>
+    <div class="mobile-frame">
+        <div class="container">
+            <div class="header">
+                <div class="user-info">
+                    <img src="https://i.postimg.cc/vBBWGZjL/image.png" alt="User" class="user-icon">
+                    <div class="user-details">
+                        <div class="username">Loading...</div>
+                        <div class="rate">10/hour</div>
+                    </div>
+                </div>
+                <div class="balance-container">
+                    <img src="https://i.postimg.cc/FFx7T4Bh/image.png" alt="Token" class="balance-icon">
+                    <div class="balance">0</div>
+                </div>
             </div>
-            <div class="stat-box">
-                <div class="stat-label">Энергия</div>
-                <div class="stat-value" id="energy">100</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Доход в час</div>
-                <div class="stat-value" id="hourlyRate">10</div>
-            </div>
-        </div>
 
-        <!-- Прогресс энергии -->
-        <div class="progress-bar">
-            <div class="progress-fill" id="energyBar" style="width: 100%"></div>
-        </div>
-
-        <!-- Кнопки действий -->
-        <div class="actions">
-            <button onclick="work()" id="workButton">Работать</button>
-            <button onclick="rest()" id="restButton">Отдохнуть</button>
-            <button onclick="upgrade()" id="upgradeButton">Улучшить (100)</button>
-        </div>
-
-        <!-- Достижения -->
-        <div class="achievements">
-            <h2>Достижения</h2>
-            <div id="achievementsList">
-                <!-- Достижения будут добавлены через JavaScript -->
+            <div class="game-area">
+                <div class="main-circle">
+                    <div class="circle-gradient"></div>
+                    <div class="circle-gradient-inner"></div>
+                    <img src="https://i.postimg.cc/ZnggtH7v/image.png" alt="Koala" class="koala-img">
+                </div>
             </div>
+
+            <div class="progress-container">
+                <div class="energy-info">
+                    <img src="https://i.postimg.cc/FsZCF7Cw/image.png" alt="Energy" class="energy-icon">
+                    <span class="progress-text">100/100</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress"></div>
+                    <div class="progress-stripes">
+                        <div class="stripe" style="left: -44px"></div>
+                        <div class="stripe" style="left: -26px"></div>
+                        <div class="stripe" style="left: -8px"></div>
+                        <div class="stripe" style="left: 10px"></div>
+                        <div class="stripe" style="left: 28px"></div>
+                        <div class="stripe" style="left: 46px"></div>
+                        <div class="stripe" style="left: 64px"></div>
+                        <div class="stripe" style="left: 82px"></div>
+                        <div class="stripe" style="left: 100px"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reward-section" style="display: none;">
+                <div class="bg-[#1A1B1A] p-1 rounded-xl flex gap-2 mb-4 shrink-0">
+                    <button class="flex-1 py-3 rounded-lg text-center transition-all duration-300 bg-[#262626] text-white">In-game</button>
+                    <button class="flex-1 py-3 rounded-lg text-center transition-all duration-300 text-white/50">Partner</button>
+                </div>
+                <div class="space-y-3 pb-24 overflow-y-auto flex-1">
+                    <!-- Reward items will be added here by JavaScript -->
+                </div>
+            </div>
+
+            <nav class="bottom-nav">
+                <a href="#" class="nav-item active" data-section="home">
+                    <img src="https://i.postimg.cc/Y986QWcW/image.png" alt="Home" class="nav-icon">
+                    <span>Home</span>
+                </a>
+                <a href="#" class="nav-item" data-section="frens">
+                    <img src="https://i.postimg.cc/bYHMFCPx/image.png" alt="Frens" class="nav-icon">
+                    <span>Frens</span>
+                </a>
+                <a href="#" class="nav-item" data-section="cards">
+                    <img src="https://i.postimg.cc/T2C0DZG4/image.png" alt="Cards" class="nav-icon">
+                    <span>Cards</span>
+                </a>
+                <a href="#" class="nav-item" data-section="mining">
+                    <img src="https://i.postimg.cc/jd48ZLzZ/image.png" alt="Mining" class="nav-icon">
+                    <span>Mining</span>
+                </a>
+                <a href="#" class="nav-item" data-section="reward">
+                    <img src="https://i.postimg.cc/XY2s6m15/image.png" alt="Reward" class="nav-icon">
+                    <span>Reward</span>
+                </a>
+                <a href="#" class="nav-item" onclick="window.gameDB.logout()">
+                    <img src="https://i.postimg.cc/XY2s6m15/image.png" alt="Logout" class="nav-icon">
+                    <span>Выход</span>
+                </a>
+            </nav>
         </div>
     </div>
 
-    <!-- Модальное окно -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle">Заголовок</h2>
-            <p id="modalText">Текст сообщения</p>
-            <button onclick="closeModal()">OK</button>
-        </div>
-    </div>
-
-    <!-- Скрипты -->
-    <script src="db.js"></script>
-    <script src="script.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
         // Глобальные объекты
         window.tg = window.Telegram.WebApp;
-        if (window.tg) {
-            window.tg.expand();
-        }
-        
-        // Инициализация Supabase
-        window.supabaseClient = supabase.createClient(
+        window.supabase = window.supabase.createClient(
             'https://qgalbzidagyazfdvnfll.supabase.co',
-            'eyJhbciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
         );
     </script>
+    <script src="telegram.js"></script>
+    <script src="background.js"></script>
+    <script src="snow.js"></script>
+    <script src="db.js"></script>
+    <script src="script.js"></script>
     <script>
         // Проверяем авторизацию
         async function checkAuth() {
-            if (!window.gameDB.isTelegramUser() && !window.gameDB.isWebUser()) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
                 window.location.href = 'login.html';
             }
         }
-        
         checkAuth();
     </script>
 </body>
