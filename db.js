@@ -1,9 +1,17 @@
 // Инициализация Supabase
 const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQwMzEyMjAsImV4cCI6MjAxOTYwNzIyMH0.qNartS0kXEqZxqwXHaAGQEXkFqOX-pzVtIuZHmgGvYs';
 
 // Создаем клиент Supabase и делаем его глобально доступным
 window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Проверяем подключение
+window.supabaseClient.auth.onAuthStateChange((event, session) => {
+    console.log('Supabase auth event:', event);
+    if (session) {
+        console.log('Connected to Supabase as:', session.user.email);
+    }
+});
 
 // Класс для работы с базой данных
 class GameDB {

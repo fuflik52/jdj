@@ -123,6 +123,18 @@ window.register = async function() {
             console.log('User created:', user);
 
             try {
+                // Проверяем, существует ли пользователь с таким email
+                const { data: existingUser } = await window.supabaseClient
+                    .from('users')
+                    .select('email')
+                    .eq('email', email)
+                    .single();
+
+                if (existingUser) {
+                    showError('Пользователь с таким email уже существует');
+                    return;
+                }
+
                 // Создаем запись в таблице users
                 console.log('Creating user record...');
                 const { error: userError } = await window.supabaseClient
@@ -137,11 +149,7 @@ window.register = async function() {
 
                 if (userError) {
                     console.error('User record creation error:', userError);
-                    if (userError.message.includes('duplicate key')) {
-                        showError('Пользователь с таким email уже существует');
-                    } else {
-                        showError('Ошибка при создании пользователя. Пожалуйста, попробуйте позже.');
-                    }
+                    showError('Ошибка при создании пользователя. Пожалуйста, попробуйте позже.');
                     return;
                 }
 
@@ -244,6 +252,8 @@ window.login = async function() {
 
                 if (progressError) {
                     console.error('Error fetching progress:', progressError);
+                    showError('Ошибка при получении данных прогресса');
+                    return;
                 }
 
                 // Сохраняем данные пользователя
@@ -288,6 +298,8 @@ window.login = async function() {
 
                     if (userError) {
                         console.error('Error fetching user data:', userError);
+                        showError('Ошибка при получении данных пользователя');
+                        return;
                     }
 
                     // Получаем прогресс пользователя
@@ -299,6 +311,8 @@ window.login = async function() {
 
                     if (progressError) {
                         console.error('Error fetching progress:', progressError);
+                        showError('Ошибка при получении данных прогресса');
+                        return;
                     }
 
                     // Сохраняем данные пользователя
