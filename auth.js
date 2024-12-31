@@ -26,18 +26,13 @@ function showError(message, isRegistration = false) {
 
 // Регистрация нового пользователя
 async function register() {
-    const username = document.getElementById('regUsername').value;
+    const email = document.getElementById('regEmail').value;
     const password = document.getElementById('regPassword').value;
     const confirmPassword = document.getElementById('regConfirmPassword').value;
 
     // Валидация
-    if (!username || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword) {
         showError('Пожалуйста, заполните все поля', true);
-        return;
-    }
-
-    if (username.length < 3) {
-        showError('Имя пользователя должно содержать минимум 3 символа', true);
         return;
     }
 
@@ -51,20 +46,13 @@ async function register() {
         return;
     }
 
-    const email = `${username}@example.com`;
-
     try {
         console.log('Attempting registration with:', email);
         
         // Регистрация пользователя
         const { data: { user }, error: signUpError } = await supabase.auth.signUp({
             email: email,
-            password: password,
-            options: {
-                data: {
-                    username: username
-                }
-            }
+            password: password
         });
 
         if (signUpError) {
@@ -81,7 +69,7 @@ async function register() {
                 .insert([
                     {
                         id: user.id,
-                        username: username,
+                        username: email.split('@')[0],
                         web_user: true
                     }
                 ])
@@ -110,7 +98,7 @@ async function register() {
             }
 
             // Показываем сообщение об успешной регистрации
-            showError('Регистрация успешна! Теперь вы можете войти.', true);
+            showError('Регистрация успешна! Проверьте почту для подтверждения.', true);
             
             // Через 2 секунды переключаемся на форму входа
             setTimeout(() => {
@@ -120,7 +108,7 @@ async function register() {
     } catch (error) {
         console.error('Registration error:', error);
         if (error.message.includes('duplicate key')) {
-            showError('Пользователь с таким именем уже существует', true);
+            showError('Этот email уже зарегистрирован', true);
         } else {
             showError(error.message, true);
         }
@@ -129,19 +117,19 @@ async function register() {
 
 // Вход существующего пользователя
 async function login() {
-    const username = document.getElementById('loginUsername').value;
+    const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
 
-    if (!username || !password) {
+    if (!email || !password) {
         showError('Пожалуйста, заполните все поля');
         return;
     }
 
     try {
-        console.log('Attempting login with:', username);
+        console.log('Attempting login with:', email);
         
         const { data: { user }, error } = await supabase.auth.signInWithPassword({
-            email: username + '@example.com',
+            email: email,
             password: password
         });
 
@@ -157,21 +145,15 @@ async function login() {
         }
     } catch (error) {
         console.error('Login error:', error);
-        showError('Неверное имя пользователя или пароль');
+        showError('Неверный email или пароль');
     }
 }
 
-// Проверяем, авторизован ли пользователь
+// Проверка авторизации
 async function checkAuth() {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-        console.error('Auth check error:', error);
-    }
-    
-    if (session) {
-        console.log('User is already authenticated:', session);
-        window.location.href = 'index.html';
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        window.location.href = 'login.html';
     }
 }
 
