@@ -36,6 +36,15 @@ function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
+// Генерация UUID
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0,
+            v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 // Регистрация нового пользователя
 window.register = async function() {
     const email = document.getElementById('regEmail').value.trim();
@@ -77,32 +86,41 @@ window.register = async function() {
 
     try {
         console.log('Starting registration process...');
-        
-        // Создаем пользователя через Supabase Auth
-        const { data: authData, error: signUpError } = await window.supabaseClient.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: {
-                    username: email.split('@')[0]
-                }
-            }
-        });
 
-        if (signUpError) {
-            console.error('Auth error:', signUpError);
-            if (signUpError.message.includes('rate limit')) {
-                showError('Превышен лимит регистраций. Пожалуйста, попробуйте позже.');
-            } else if (signUpError.message.includes('invalid')) {
-                showError('Пожалуйста, используйте реальный email адрес');
-            } else {
-                showError(signUpError.message);
+        // В тестовом режиме генерируем UUID вместо использования Supabase Auth
+        const userId = TEST_MODE ? generateUUID() : null;
+        let authData = null;
+
+        if (!TEST_MODE) {
+            // Создаем пользователя через Supabase Auth
+            const { data, error: signUpError } = await window.supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        username: email.split('@')[0]
+                    }
+                }
+            });
+
+            if (signUpError) {
+                console.error('Auth error:', signUpError);
+                if (signUpError.message.includes('rate limit')) {
+                    showError('Превышен лимит регистраций. Пожалуйста, попробуйте позже.');
+                } else if (signUpError.message.includes('invalid')) {
+                    showError('Пожалуйста, используйте реальный email адрес');
+                } else {
+                    showError(signUpError.message);
+                }
+                return;
             }
-            return;
+            authData = data;
         }
 
-        if (authData && authData.user) {
-            console.log('User created in Auth:', authData.user);
+        const user = TEST_MODE ? { id: userId, email: email } : authData.user;
+
+        if (user) {
+            console.log('User created:', user);
 
             try {
                 // Создаем запись в таблице users
@@ -111,7 +129,7 @@ window.register = async function() {
                     .from('users')
                     .insert([
                         {
-                            id: authData.user.id,
+                            id: user.id,
                             email: email,
                             username: email.split('@')[0]
                         }
@@ -135,7 +153,7 @@ window.register = async function() {
                     .from('user_progress')
                     .insert([
                         {
-                            user_id: authData.user.id,
+                            user_id: user.id,
                             balance: 0,
                             energy: 100,
                             hourly_rate: 10
@@ -149,6 +167,15 @@ window.register = async function() {
                 }
 
                 console.log('User progress created successfully');
+
+                if (TEST_MODE) {
+                    // В тестовом режиме сохраняем данные для входа
+                    localStorage.setItem('testUser', JSON.stringify({
+                        id: user.id,
+                        email: email,
+                        password: password
+                    }));
+                }
 
                 // Показываем сообщение об успешной регистрации
                 alert('Регистрация успешна! Теперь вы можете войти в систему.');
@@ -190,41 +217,29 @@ window.login = async function() {
 
     try {
         console.log('Attempting login...');
-        const { data, error } = await window.supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
 
-        if (error) {
-            console.error('Login error:', error);
-            if (error.message.includes('Invalid login credentials')) {
-                showError('Неверный email или пароль');
-            } else {
-                showError(error.message);
-            }
-            return;
-        }
-
-        if (data && data.user) {
-            console.log('Login successful:', data.user);
-
-            try {
-                // Получаем данные пользователя
+        if (TEST_MODE) {
+            // В тестовом режиме проверяем сохраненные данные
+            const testUser = JSON.parse(localStorage.getItem('testUser') || '{}');
+            if (testUser.email === email && testUser.password === password) {
+                // Получаем данные пользователя из базы
                 const { data: userData, error: userError } = await window.supabaseClient
                     .from('users')
                     .select('*')
-                    .eq('id', data.user.id)
+                    .eq('id', testUser.id)
                     .single();
 
                 if (userError) {
                     console.error('Error fetching user data:', userError);
+                    showError('Ошибка при получении данных пользователя');
+                    return;
                 }
 
                 // Получаем прогресс пользователя
                 const { data: progressData, error: progressError } = await window.supabaseClient
                     .from('user_progress')
                     .select('*')
-                    .eq('user_id', data.user.id)
+                    .eq('user_id', testUser.id)
                     .single();
 
                 if (progressError) {
@@ -233,17 +248,73 @@ window.login = async function() {
 
                 // Сохраняем данные пользователя
                 localStorage.setItem('currentUser', JSON.stringify({
-                    id: data.user.id,
-                    email: data.user.email,
-                    username: userData?.username || email.split('@')[0],
+                    id: testUser.id,
+                    email: email,
+                    username: userData.username,
                     progress: progressData || {}
                 }));
 
                 // Перенаправляем на главную страницу
                 window.location.href = 'index.html';
-            } catch (dbError) {
-                console.error('Database error:', dbError);
-                showError('Ошибка при получении данных пользователя');
+            } else {
+                showError('Неверный email или пароль');
+            }
+        } else {
+            const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                console.error('Login error:', error);
+                if (error.message.includes('Invalid login credentials')) {
+                    showError('Неверный email или пароль');
+                } else {
+                    showError(error.message);
+                }
+                return;
+            }
+
+            if (data && data.user) {
+                console.log('Login successful:', data.user);
+
+                try {
+                    // Получаем данные пользователя
+                    const { data: userData, error: userError } = await window.supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('id', data.user.id)
+                        .single();
+
+                    if (userError) {
+                        console.error('Error fetching user data:', userError);
+                    }
+
+                    // Получаем прогресс пользователя
+                    const { data: progressData, error: progressError } = await window.supabaseClient
+                        .from('user_progress')
+                        .select('*')
+                        .eq('user_id', data.user.id)
+                        .single();
+
+                    if (progressError) {
+                        console.error('Error fetching progress:', progressError);
+                    }
+
+                    // Сохраняем данные пользователя
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        id: data.user.id,
+                        email: data.user.email,
+                        username: userData?.username || email.split('@')[0],
+                        progress: progressData || {}
+                    }));
+
+                    // Перенаправляем на главную страницу
+                    window.location.href = 'index.html';
+                } catch (dbError) {
+                    console.error('Database error:', dbError);
+                    showError('Ошибка при получении данных пользователя');
+                }
             }
         }
     } catch (error) {
