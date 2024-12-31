@@ -1,8 +1,9 @@
 // Инициализация Supabase
-const supabase = window.supabase.createClient(
-    'https://qgalbzidagyazfdvnfll.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
-);
+const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4NTM1MTAsImV4cCI6MjAxOTQyOTUxMH0.JVG33zXYj1LxqwboJ3XKpxgikc-1q_wX1R4ORXGkwBE';
+
+// Создаем клиент Supabase
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Переключение между формами входа и регистрации
 function toggleForms() {
@@ -50,7 +51,7 @@ async function register() {
         console.log('Attempting registration with:', email);
         
         // Регистрация пользователя
-        const { data: { user }, error: signUpError } = await window.supabase.auth.signUp({
+        const { data: { user }, error: signUpError } = await supabaseClient.auth.signUp({
             email: email,
             password: password
         });
@@ -64,7 +65,7 @@ async function register() {
             console.log('Registration successful:', user);
             
             // Создание записи в таблице users
-            const { error: userError } = await window.supabase
+            const { error: userError } = await supabaseClient
                 .from('users')
                 .insert([
                     {
@@ -81,7 +82,7 @@ async function register() {
             }
 
             // Создание начального прогресса
-            const { error: progressError } = await window.supabase
+            const { error: progressError } = await supabaseClient
                 .from('user_progress')
                 .insert([
                     {
@@ -128,7 +129,7 @@ async function login() {
     try {
         console.log('Attempting login with:', email);
         
-        const { data: { user }, error } = await window.supabase.auth.signInWithPassword({
+        const { data: { user }, error } = await supabaseClient.auth.signInWithPassword({
             email: email,
             password: password
         });
@@ -151,7 +152,7 @@ async function login() {
 
 // Проверка авторизации
 async function checkAuth() {
-    const { data: { user } } = await window.supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
         window.location.href = 'login.html';
     }
