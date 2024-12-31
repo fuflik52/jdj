@@ -1,10 +1,3 @@
-// Инициализация Telegram WebApp
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-// Импортируем функции для работы с базой данных
-import gameDB from './db.js';
-
 document.addEventListener('DOMContentLoaded', function() {
     const mainCircle = document.querySelector('.main-circle');
     const gameArea = document.querySelector('.game-area');
@@ -18,16 +11,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const maxEnergy = 100;
     const energyPerClick = 1;
     const energyRegenRate = 1;
-    window.totalHourlyRate = 10;
-    window.purchasedCards = []; // Массив для хранения купленных карт
+    let totalHourlyRate = 10;
+    let purchasedCards = []; // Массив для хранения купленных карт
 
     // Функция для сохранения данных
     async function saveGameData() {
         try {
             // Сначала пытаемся сохранить в базу данных
-            if (tg.initDataUnsafe.user) {
-                await gameDB.updateBalance(clickCount);
-                await gameDB.updateEnergy(energy);
+            if (window.tg && window.tg.initDataUnsafe && window.tg.initDataUnsafe.user) {
+                // await gameDB.updateBalance(clickCount);
+                // await gameDB.updateEnergy(energy);
             }
         } catch (error) {
             console.error('Error saving to database:', error);
@@ -35,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // В любом случае сохраняем локально как резервную копию
         localStorage.setItem('balance', clickCount);
-        localStorage.setItem('purchasedCards', JSON.stringify(window.purchasedCards));
+        localStorage.setItem('purchasedCards', JSON.stringify(purchasedCards));
         localStorage.setItem('energy', energy);
     }
 
@@ -43,22 +36,22 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadGameData() {
         try {
             // Сначала пытаемся загрузить из базы данных
-            if (tg.initDataUnsafe.user) {
-                await gameDB.initUser(tg.initDataUnsafe.user);
-                const progress = await gameDB.initProgress();
-                if (progress) {
-                    clickCount = progress.balance;
-                    energy = progress.energy;
-                    balanceElement.textContent = Math.floor(clickCount);
-                    updateEnergy();
-                }
+            if (window.tg && window.tg.initDataUnsafe && window.tg.initDataUnsafe.user) {
+                // await gameDB.initUser(tg.initDataUnsafe.user);
+                // const progress = await gameDB.initProgress();
+                // if (progress) {
+                //     clickCount = progress.balance;
+                //     energy = progress.energy;
+                //     balanceElement.textContent = Math.floor(clickCount);
+                //     updateEnergy();
+                // }
 
                 // Загружаем купленные карточки
-                const dbPurchasedCards = await gameDB.getPurchasedCards();
-                if (dbPurchasedCards.length > 0) {
-                    window.purchasedCards = dbPurchasedCards;
-                    updateTotalHourlyRate();
-                }
+                // const dbPurchasedCards = await gameDB.getPurchasedCards();
+                // if (dbPurchasedCards.length > 0) {
+                //     purchasedCards = dbPurchasedCards;
+                //     updateTotalHourlyRate();
+                // }
                 return;
             }
         } catch (error) {
@@ -76,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (savedPurchasedCards) {
-            window.purchasedCards = JSON.parse(savedPurchasedCards);
+            purchasedCards = JSON.parse(savedPurchasedCards);
         }
 
         if (savedEnergy) {
@@ -99,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (userData) {
             clickCount = Number(userData.balance) || 0;
             energy = Number(userData.energy) || 100;
-            window.purchasedCards = userData.purchasedItems || [];
+            purchasedCards = userData.purchasedItems || [];
             // Обновляем все значения на странице
             updateTotalHourlyRate();
             updateEnergy();
@@ -112,31 +105,31 @@ document.addEventListener('DOMContentLoaded', function() {
     async function updateTotalHourlyRate() {
         try {
             // Пытаемся получить часовой доход из базы данных
-            if (tg.initDataUnsafe.user) {
-                const dbRate = await gameDB.calculateHourlyRate();
-                window.totalHourlyRate = dbRate;
+            if (window.tg && window.tg.initDataUnsafe && window.tg.initDataUnsafe.user) {
+                // const dbRate = await gameDB.calculateHourlyRate();
+                // totalHourlyRate = dbRate;
             } else {
-                window.totalHourlyRate = 10; // Базовая прибыль
-                if (window.purchasedCards && window.purchasedCards.length > 0) {
-                    window.purchasedCards.forEach(card => {
-                        window.totalHourlyRate += Number(card.perHour);
+                totalHourlyRate = 10; // Базовая прибыль
+                if (purchasedCards && purchasedCards.length > 0) {
+                    purchasedCards.forEach(card => {
+                        totalHourlyRate += Number(card.perHour);
                     });
                 }
             }
         } catch (error) {
             console.error('Error calculating hourly rate:', error);
             // В случае ошибки считаем локально
-            window.totalHourlyRate = 10;
-            if (window.purchasedCards && window.purchasedCards.length > 0) {
-                window.purchasedCards.forEach(card => {
-                    window.totalHourlyRate += Number(card.perHour);
+            totalHourlyRate = 10;
+            if (purchasedCards && purchasedCards.length > 0) {
+                purchasedCards.forEach(card => {
+                    totalHourlyRate += Number(card.perHour);
                 });
             }
         }
 
         const rateElement = document.querySelector('.user-info .rate');
         if (rateElement) {
-            rateElement.textContent = `${window.totalHourlyRate}/hour`;
+            rateElement.textContent = `${totalHourlyRate}/hour`;
         }
         // Сохраняем данные
         if (window.telegramAuth && window.telegramAuth.isAuthenticated) {
@@ -146,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Обновление баланса каждую секунду
     setInterval(() => {
-        const increment = Number(window.totalHourlyRate || 0) / 3600;
+        const increment = Number(totalHourlyRate || 0) / 3600;
         clickCount = Number(clickCount) + Number(increment);
         balanceElement.textContent = Math.floor(clickCount);
         // Сохраняем текущий баланс
@@ -235,8 +228,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Добавляем обработку покупки карточки
     async function handleCardPurchase(card) {
         try {
-            if (tg.initDataUnsafe.user) {
-                await gameDB.purchaseCard(card.id);
+            if (window.tg && window.tg.initDataUnsafe && window.tg.initDataUnsafe.user) {
+                // await gameDB.purchaseCard(card.id);
             }
         } catch (error) {
             console.error('Error saving purchase to database:', error);
@@ -245,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // В любом случае обновляем локальное состояние
         if (window.telegramAuth) {
             window.telegramAuth.addPurchasedItem(card);
-            window.purchasedCards = window.telegramAuth.purchasedItems;
+            purchasedCards = window.telegramAuth.purchasedItems;
             updateTotalHourlyRate();
         }
     }
@@ -537,7 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cardElement.className = 'card-item';
 
             // Проверяем, была ли карточка куплена ранее
-            const isPurchased = window.purchasedCards.some(pc => pc.id === card.id);
+            const isPurchased = purchasedCards.some(pc => pc.id === card.id);
             
             cardElement.innerHTML = `
                 <div class="card-image">
@@ -582,8 +575,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         // Добавляем карту в купленные
                         const cardData = cardsData.find(c => c.id === cardId);
-                        if (cardData && !window.purchasedCards.some(pc => pc.id === cardId)) {
-                            window.purchasedCards.push(cardData);
+                        if (cardData && !purchasedCards.some(pc => pc.id === cardId)) {
+                            purchasedCards.push(cardData);
                             updateOwnedCards();
                             handleCardPurchase(cardData);
                             // Обновляем общую прибыль в час
@@ -608,13 +601,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Функция обновления списка купленных карт
         function updateOwnedCards() {
             ownedCardsContainer.innerHTML = '';
-            if (!window.purchasedCards || window.purchasedCards.length === 0) {
+            if (!purchasedCards || purchasedCards.length === 0) {
                 const emptyMessage = document.createElement('div');
                 emptyMessage.className = 'empty-message';
                 emptyMessage.textContent = 'У вас пока нет купленных карт';
                 ownedCardsContainer.appendChild(emptyMessage);
             } else {
-                window.purchasedCards.forEach(card => {
+                purchasedCards.forEach(card => {
                     ownedCardsContainer.appendChild(createCardElement(card, true));
                 });
             }
