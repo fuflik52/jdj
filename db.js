@@ -3,21 +3,13 @@ const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQwMzEyMjAsImV4cCI6MjAxOTYwNzIyMH0.qNartS0kXEqZxqwXHaAGQEXkFqOX-pzVtIuZHmgGvYs';
 
 // Создаем клиент Supabase и делаем его глобально доступным
-window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-    },
-    db: {
-        schema: 'public'
-    },
-    global: {
-        headers: {
-            'apikey': SUPABASE_ANON_KEY
-        }
-    }
-});
+window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Добавляем заголовок Authorization для всех запросов
+window.supabaseClient.rest.headers = {
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+};
 
 // Проверяем подключение
 window.supabaseClient.auth.onAuthStateChange((event, session) => {
