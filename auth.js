@@ -17,10 +17,11 @@ function toggleForms() {
 }
 
 // Показ сообщения об ошибке
-function showError(message) {
-    const errorMessage = document.getElementById('errorMessage');
-    errorMessage.textContent = message;
-    errorMessage.style.display = 'block';
+function showError(message, isRegistration = false) {
+    const errorElement = document.getElementById(isRegistration ? 'regErrorMessage' : 'loginErrorMessage');
+    if (errorElement) {
+        errorElement.textContent = message;
+    }
 }
 
 // Регистрация нового пользователя
@@ -30,20 +31,21 @@ async function register() {
     const confirmPassword = document.getElementById('regConfirmPassword').value;
 
     if (!username || !password) {
-        showError('Пожалуйста, заполните все поля');
+        showError('Пожалуйста, заполните все поля', true);
         return;
     }
 
     if (password !== confirmPassword) {
-        showError('Пароли не совпадают');
+        showError('Пароли не совпадают', true);
         return;
     }
 
     try {
         console.log('Attempting registration with:', username);
         
+        // Регистрация пользователя
         const { data: { user }, error: signUpError } = await supabase.auth.signUp({
-            email: `${username}@koalagame.com`,
+            email: `${username}@example.com`,  // Используем фиксированный домен
             password: password,
             options: {
                 data: {
@@ -98,7 +100,7 @@ async function register() {
         }
     } catch (error) {
         console.error('Registration error:', error);
-        showError(error.message);
+        showError(error.message, true);
     }
 }
 

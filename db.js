@@ -213,5 +213,11 @@ const gameDB = {
     }
 };
 
+// Инициализация Supabase клиента
+const supabase = window.supabase.createClient(
+    'https://qgalbzidagyazfdvnfll.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
+);
+
 // Делаем gameDB доступным глобально
 window.gameDB = gameDB;

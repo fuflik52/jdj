@@ -90,7 +90,7 @@
 <body>
     <div class="login-container">
         <!-- Форма входа -->
-        <div id="loginForm">
+        <form id="loginForm">
             <h2>Вход в игру</h2>
             <div class="form-group">
                 <label for="loginUsername">Имя пользователя</label>
@@ -100,15 +100,15 @@
                 <label for="loginPassword">Пароль</label>
                 <input type="password" id="loginPassword" required>
             </div>
-            <div id="errorMessage" class="error-message"></div>
-            <button onclick="login()">Войти</button>
+            <div id="loginErrorMessage" class="error-message"></div>
+            <button type="button" onclick="login()">Войти</button>
             <div class="toggle-form">
                 Нет аккаунта? <a onclick="toggleForms()">Зарегистрироваться</a>
             </div>
-        </div>
+        </form>
 
         <!-- Форма регистрации -->
-        <div id="registerForm">
+        <form id="registerForm">
             <h2>Регистрация</h2>
             <div class="form-group">
                 <label for="regUsername">Имя пользователя</label>
@@ -123,14 +123,36 @@
                 <input type="password" id="regConfirmPassword" required>
             </div>
             <div id="regErrorMessage" class="error-message"></div>
-            <button onclick="register()">Зарегистрироваться</button>
+            <button type="button" onclick="register()">Зарегистрироваться</button>
             <div class="toggle-form">
                 Уже есть аккаунт? <a onclick="toggleForms()">Войти</a>
             </div>
-        </div>
+        </form>
     </div>
 
-    <!-- Скрипты -->
     <script src="auth.js"></script>
+    <script>
+        function toggleForms() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            
+            if (loginForm.style.display === 'none') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
+        }
+
+        // Очистка сообщений об ошибках при переключении форм
+        document.querySelectorAll('.toggle-form a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.querySelectorAll('.error-message').forEach(msg => {
+                    msg.textContent = '';
+                });
+            });
+        });
+    </script>
 </body>
 </html>
