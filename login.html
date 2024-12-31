@@ -78,9 +78,8 @@
 
         .error-message {
             color: #ff6b6b;
-            margin-top: 1rem;
+            margin: 1rem 0;
             text-align: center;
-            display: none;
         }
 
         #registerForm {
@@ -101,6 +100,7 @@
                 <label for="loginPassword">Пароль</label>
                 <input type="password" id="loginPassword" required>
             </div>
+            <div id="errorMessage" class="error-message"></div>
             <button onclick="login()">Войти</button>
             <div class="toggle-form">
                 Нет аккаунта? <a onclick="toggleForms()">Зарегистрироваться</a>
@@ -122,15 +122,13 @@
                 <label for="regConfirmPassword">Подтвердите пароль</label>
                 <input type="password" id="regConfirmPassword" required>
             </div>
+            <div id="regErrorMessage" class="error-message"></div>
             <button onclick="register()">Зарегистрироваться</button>
             <div class="toggle-form">
                 Уже есть аккаунт? <a onclick="toggleForms()">Войти</a>
             </div>
         </div>
     </div>
-
-    <!-- Сообщение об ошибке -->
-    <div id="errorMessage" class="error-message"></div>
 
     <!-- Скрипты -->
     <script src="auth.js"></script>

@@ -116,7 +116,7 @@ async function login() {
         console.log('Attempting login with:', username);
         
         const { data: { user }, error } = await supabase.auth.signInWithPassword({
-            email: `${username}@koalagame.com`,
+            email: 'test2@example.com',  // Используем тестовый email
             password: password
         });
 
