@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koala Game - Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1b1a;
+            color: white;
+        }
+
+        .login-container {
+            background: #262626;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ccc;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #444;
+            border-radius: 0.5rem;
+            background: #333;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #4CAF50;
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .toggle-form {
+            text-align: center;
+            margin-top: 1rem;
+            color: #888;
+        }
+
+        .toggle-form a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div id="loginForm">
+            <h2>Вход в игру</h2>
+            <div class="form-group">
+                <label for="loginUsername">Имя пользователя</label>
+                <input type="text" id="loginUsername" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Пароль</label>
+                <input type="password" id="loginPassword" required>
+            </div>
+            <button onclick="login()">Войти</button>
+            <div class="toggle-form">
+                Нет аккаунта? <a href="#" onclick="toggleForms()">Зарегистрироваться</a>
+            </div>
+        </div>
+
+        <div id="registerForm" style="display: none;">
+            <h2>Регистрация</h2>
+            <div class="form-group">
+                <label for="regUsername">Имя пользователя</label>
+                <input type="text" id="regUsername" required>
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Пароль</label>
+                <input type="password" id="regPassword" required>
+            </div>
+            <div class="form-group">
+                <label for="regConfirmPassword">Подтвердите пароль</label>
+                <input type="password" id="regConfirmPassword" required>
+            </div>
+            <button onclick="register()">Зарегистрироваться</button>
+            <div class="toggle-form">
+                Уже есть аккаунт? <a href="#" onclick="toggleForms()">Войти</a>
+            </div>
+        </div>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="auth.js"></script>
+</body>
+</html>

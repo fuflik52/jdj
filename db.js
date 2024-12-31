@@ -1,75 +1,127 @@
 // База данных игры
 const gameDB = {
-    // Инициализация пользователя
-    async initUser(telegramUser) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('users')
-                .upsert({
-                    telegram_id: telegramUser.id,
-                    username: telegramUser.username,
-                    first_name: telegramUser.first_name,
-                    last_name: telegramUser.last_name,
-                    balance: 0,
-                    energy: 100
-                })
-                .select()
-                .single();
+    // Проверка, является ли пользователь телеграм пользователем
+    isTelegramUser() {
+        return window.tg && window.tg.initDataUnsafe && window.tg.initDataUnsafe.user;
+    },
 
-            if (error) throw error;
-            return data;
-        } catch (error) {
-            console.error('Error initializing user:', error);
+    // Проверка, авторизован ли веб-пользователь
+    isWebUser() {
+        return localStorage.getItem('user_id') !== null;
+    },
+
+    // Получение ID пользователя
+    getUserId() {
+        if (this.isTelegramUser()) {
+            return window.tg.initDataUnsafe.user.id;
+        } else if (this.isWebUser()) {
+            return localStorage.getItem('user_id');
+        }
+        return null;
+    },
+
+    // Получение имени пользователя
+    getUsername() {
+        if (this.isTelegramUser()) {
+            return window.tg.initDataUnsafe.user.username;
+        } else if (this.isWebUser()) {
+            return localStorage.getItem('username');
+        }
+        return 'Guest';
+    },
+
+    // Инициализация пользователя
+    async initUser() {
+        if (!this.getUserId()) {
+            window.location.href = 'login.html';
             return null;
+        }
+
+        if (this.isTelegramUser()) {
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('users')
+                    .upsert({
+                        telegram_id: window.tg.initDataUnsafe.user.id,
+                        username: window.tg.initDataUnsafe.user.username,
+                        first_name: window.tg.initDataUnsafe.user.first_name,
+                        last_name: window.tg.initDataUnsafe.user.last_name
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                return data;
+            } catch (error) {
+                console.error('Error initializing user:', error);
+                return null;
+            }
+        } else {
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('users')
+                    .select()
+                    .eq('id', this.getUserId())
+                    .single();
+
+                if (error) throw error;
+                return data;
+            } catch (error) {
+                console.error('Error getting web user:', error);
+                return null;
+            }
         }
     },
 
     // Загрузка прогресса
-    async initProgress() {
+    async loadProgress() {
         try {
             const { data, error } = await window.supabaseClient
-                .from('game_progress')
+                .from('user_progress')
                 .select('*')
+                .eq('user_id', this.getUserId())
                 .single();
 
             if (error) throw error;
             return data;
         } catch (error) {
             console.error('Error loading progress:', error);
-            return null;
+            return {
+                balance: 0,
+                energy: 100,
+                hourly_rate: 10
+            };
+        }
+    },
+
+    // Сохранение прогресса
+    async saveProgress(progress) {
+        try {
+            const { error } = await window.supabaseClient
+                .from('user_progress')
+                .upsert({
+                    user_id: this.getUserId(),
+                    ...progress
+                });
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error saving progress:', error);
         }
     },
 
     // Обновление баланса
     async updateBalance(balance) {
-        try {
-            const { error } = await window.supabaseClient
-                .from('users')
-                .update({ balance })
-                .eq('telegram_id', window.tg.initDataUnsafe.user.id);
-
-            if (error) throw error;
-            return true;
-        } catch (error) {
-            console.error('Error updating balance:', error);
-            return false;
-        }
+        const progress = await this.loadProgress();
+        progress.balance = balance;
+        await this.saveProgress(progress);
     },
 
     // Обновление энергии
     async updateEnergy(energy) {
-        try {
-            const { error } = await window.supabaseClient
-                .from('users')
-                .update({ energy })
-                .eq('telegram_id', window.tg.initDataUnsafe.user.id);
-
-            if (error) throw error;
-            return true;
-        } catch (error) {
-            console.error('Error updating energy:', error);
-            return false;
-        }
+        const progress = await this.loadProgress();
+        progress.energy = energy;
+        await this.saveProgress(progress);
     },
 
     // Получение всех карточек
@@ -97,7 +149,7 @@ const gameDB = {
                     *,
                     cards (*)
                 `)
-                .eq('user_id', window.tg.initDataUnsafe.user.id);
+                .eq('user_id', this.getUserId());
 
             if (error) throw error;
             return data;
@@ -110,9 +162,6 @@ const gameDB = {
     // Покупка карточки
     async purchaseCard(cardId) {
         try {
-            // Начинаем транзакцию
-            const { data: { user_id } } = await window.supabaseClient.auth.getUser();
-            
             // Получаем карточку и проверяем баланс
             const { data: card } = await window.supabaseClient
                 .from('cards')
@@ -120,33 +169,25 @@ const gameDB = {
                 .eq('id', cardId)
                 .single();
 
-            const { data: user } = await window.supabaseClient
-                .from('users')
-                .select('balance')
-                .eq('telegram_id', window.tg.initDataUnsafe.user.id)
-                .single();
+            const progress = await this.loadProgress();
 
-            if (user.balance < card.price) {
+            if (progress.balance < card.price) {
                 throw new Error('Недостаточно средств');
             }
 
-            // Покупаем карточку и обновляем баланс
+            // Покупаем карточку
             const { error: purchaseError } = await window.supabaseClient
                 .from('purchased_cards')
                 .insert({
-                    user_id: window.tg.initDataUnsafe.user.id,
+                    user_id: this.getUserId(),
                     card_id: cardId
                 });
 
             if (purchaseError) throw purchaseError;
 
-            // Обновляем баланс пользователя
-            const { error: balanceError } = await window.supabaseClient
-                .from('users')
-                .update({ balance: user.balance - card.price })
-                .eq('telegram_id', window.tg.initDataUnsafe.user.id);
-
-            if (balanceError) throw balanceError;
+            // Обновляем баланс
+            progress.balance -= card.price;
+            await this.saveProgress(progress);
 
             return {
                 success: true,
@@ -161,16 +202,13 @@ const gameDB = {
         }
     },
 
-    // Расчет часового дохода
-    async calculateHourlyRate() {
-        try {
-            const purchasedCards = await this.getPurchasedCards();
-            const baseRate = 10;
-            const totalRate = purchasedCards.reduce((sum, pc) => sum + pc.cards.per_hour, baseRate);
-            return totalRate;
-        } catch (error) {
-            console.error('Error calculating hourly rate:', error);
-            return 10; // Возвращаем базовую ставку в случае ошибки
+    // Выход из аккаунта
+    async logout() {
+        if (this.isWebUser()) {
+            await window.supabaseClient.auth.signOut();
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
         }
     }
 };

@@ -15,7 +15,7 @@
                 <div class="user-info">
                     <img src="https://i.postimg.cc/vBBWGZjL/image.png" alt="User" class="user-icon">
                     <div class="user-details">
-                        <div class="username">Guest</div>
+                        <div class="username">Loading...</div>
                         <div class="rate">10/hour</div>
                     </div>
                 </div>
@@ -85,6 +85,10 @@
                     <img src="https://i.postimg.cc/XY2s6m15/image.png" alt="Reward" class="nav-icon">
                     <span>Reward</span>
                 </a>
+                <a href="#" class="nav-item" onclick="window.gameDB.logout()">
+                    <img src="https://i.postimg.cc/XY2s6m15/image.png" alt="Logout" class="nav-icon">
+                    <span>Выход</span>
+                </a>
             </nav>
         </div>
     </div>
@@ -93,12 +97,14 @@
     <script>
         // Глобальные объекты
         window.tg = window.Telegram.WebApp;
-        window.tg.expand();
+        if (window.tg) {
+            window.tg.expand();
+        }
         
         // Инициализация Supabase
         window.supabaseClient = supabase.createClient(
             'https://qgalbzidagyazfdvnfll.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM5MjgxNzAsImV4cCI6MjAxOTUwNDE3MH0.qgZBGvZMXDOLmhqTyPKrqSEqDvXfvGNYiDw_7zBo1Vc'
         );
     </script>
     <script src="telegram.js"></script>
@@ -107,12 +113,14 @@
     <script src="db.js"></script>
     <script src="script.js"></script>
     <script>
-        // Проверяем, пришли ли мы с loading.html
-        if (!sessionStorage.getItem('loaded')) {
-            window.location.href = 'loading.html';
-        } else {
-            sessionStorage.removeItem('loaded');
+        // Проверяем авторизацию
+        async function checkAuth() {
+            if (!window.gameDB.isTelegramUser() && !window.gameDB.isWebUser()) {
+                window.location.href = 'login.html';
+            }
         }
+        
+        checkAuth();
     </script>
 </body>
 </html>

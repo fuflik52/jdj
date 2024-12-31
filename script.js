@@ -673,4 +673,85 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('.container').insertBefore(section, document.querySelector('.bottom-nav'));
         return section;
     }
+
+    // Инициализация игры
+    async function initGame() {
+        let user;
+        
+        if (window.gameDB.isTelegramUser()) {
+            // Для пользователей Telegram
+            user = await window.gameDB.initUser(window.tg.initDataUnsafe.user);
+        } else {
+            // Для обычных пользователей
+            user = await window.gameDB.initUser();
+        }
+
+        if (!user) {
+            console.error('Failed to initialize user');
+            return;
+        }
+
+        // Загружаем прогресс
+        const progress = await window.gameDB.loadProgress();
+        if (progress) {
+            updateUI(progress);
+        }
+
+        // Запускаем игровой цикл
+        startGameLoop();
+    }
+
+    // Обновление интерфейса
+    function updateUI(progress) {
+        // Обновляем отображение баланса
+        const balanceElement = document.querySelector('.balance');
+        if (balanceElement) {
+            balanceElement.textContent = progress.balance;
+        }
+
+        // Обновляем отображение энергии
+        const energyElement = document.querySelector('.progress-text');
+        if (energyElement) {
+            energyElement.textContent = `${progress.energy}/100`;
+        }
+
+        // Обновляем прогресс-бар
+        const progressBar = document.querySelector('.progress');
+        if (progressBar) {
+            progressBar.style.width = `${progress.energy}%`;
+        }
+
+        // Обновляем почасовую ставку
+        const rateElement = document.querySelector('.rate');
+        if (rateElement) {
+            rateElement.textContent = `${progress.hourly_rate || 10}/hour`;
+        }
+    }
+
+    // Игровой цикл
+    function startGameLoop() {
+        setInterval(async () => {
+            const progress = await window.gameDB.loadProgress();
+            if (progress) {
+                // Начисляем монеты
+                const hourlyRate = progress.hourly_rate || 10;
+                const earnedCoins = hourlyRate / 3600; // монеты в секунду
+                progress.balance += earnedCoins;
+                
+                // Уменьшаем энергию
+                if (progress.energy > 0) {
+                    progress.energy -= 0.1;
+                }
+
+                // Сохраняем прогресс
+                await window.gameDB.saveProgress(progress);
+                
+                // Обновляем UI
+                updateUI(progress);
+            }
+        }, 1000); // Обновление каждую секунду
+    }
+
+    // Запускаем игру при загрузке страницы
+    initGame();
 });
