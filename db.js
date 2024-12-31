@@ -3,13 +3,17 @@ const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQwMzEyMjAsImV4cCI6MjAxOTYwNzIyMH0.qNartS0kXEqZxqwXHaAGQEXkFqOX-pzVtIuZHmgGvYs';
 
 // Создаем клиент Supabase и делаем его глобально доступным
-window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Добавляем заголовок Authorization для всех запросов
-window.supabaseClient.rest.headers = {
-    'apikey': SUPABASE_ANON_KEY,
-    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-};
+window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: true
+    },
+    global: {
+        headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+    }
+});
 
 // Проверяем подключение
 window.supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -218,9 +222,16 @@ class GameDB {
     // Создание пользователя
     async createUser(userData) {
         try {
+            // Добавляем обязательные поля
+            const fullUserData = {
+                ...userData,
+                web_user: true,
+                created_at: new Date().toISOString()
+            };
+
             const { data, error } = await this.supabase
                 .from('users')
-                .insert([userData])
+                .insert([fullUserData])
                 .select()
                 .single();
 
@@ -235,9 +246,16 @@ class GameDB {
     // Создание прогресса пользователя
     async createUserProgress(progressData) {
         try {
+            // Добавляем временные метки
+            const fullProgressData = {
+                ...progressData,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
             const { data, error } = await this.supabase
                 .from('user_progress')
-                .insert([progressData])
+                .insert([fullProgressData])
                 .select()
                 .single();
 
