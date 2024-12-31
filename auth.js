@@ -54,6 +54,7 @@ window.register = async function() {
 
     // Показываем сообщение об ошибке
     function showError(message) {
+        console.error('Registration error:', message);
         errorElement.textContent = message;
         errorElement.style.display = 'block';
     }
@@ -123,6 +124,23 @@ window.register = async function() {
             console.log('User created:', user);
 
             try {
+                // Проверяем, существует ли пользователь с таким email
+                console.log('Checking for existing user...');
+                const { data: existingUsers, error: checkError } = await window.supabaseClient
+                    .from('users')
+                    .select('id')
+                    .eq('email', email);
+
+                if (checkError) {
+                    console.error('Error checking existing user:', checkError);
+                    throw checkError;
+                }
+
+                if (existingUsers && existingUsers.length > 0) {
+                    showError('Пользователь с таким email уже существует');
+                    return;
+                }
+
                 // Создаем запись в таблице users
                 console.log('Creating user record...');
                 const { error: userError } = await window.supabaseClient
@@ -137,8 +155,7 @@ window.register = async function() {
 
                 if (userError) {
                     console.error('User record creation error:', userError);
-                    showError('Ошибка при создании пользователя. Пожалуйста, попробуйте позже.');
-                    return;
+                    throw userError;
                 }
 
                 console.log('User record created successfully');
@@ -158,8 +175,7 @@ window.register = async function() {
 
                 if (progressError) {
                     console.error('Progress creation error:', progressError);
-                    showError('Ошибка при создании профиля. Пожалуйста, попробуйте позже.');
-                    return;
+                    throw progressError;
                 }
 
                 console.log('User progress created successfully');
@@ -185,12 +201,22 @@ window.register = async function() {
                 window.toggleForms();
             } catch (dbError) {
                 console.error('Database error:', dbError);
-                showError('Ошибка при создании профиля. Пожалуйста, попробуйте позже.');
+                if (dbError.message.includes('duplicate key')) {
+                    showError('Пользователь с таким email уже существует');
+                } else if (dbError.message.includes('permission denied')) {
+                    showError('Ошибка доступа к базе данных. Пожалуйста, обратитесь к администратору.');
+                } else {
+                    showError('Ошибка при создании профиля. Пожалуйста, попробуйте позже.');
+                }
             }
         }
     } catch (error) {
         console.error('Registration error:', error);
-        showError('Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.');
+        if (error.message.includes('permission denied')) {
+            showError('Ошибка доступа к базе данных. Пожалуйста, обратитесь к администратору.');
+        } else {
+            showError('Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.');
+        }
     }
 }
 
@@ -202,6 +228,7 @@ window.login = async function() {
 
     // Показываем сообщение об ошибке
     function showError(message) {
+        console.error('Login error:', message);
         errorElement.textContent = message;
         errorElement.style.display = 'block';
     }
@@ -218,20 +245,34 @@ window.login = async function() {
             // В тестовом режиме проверяем сохраненные данные
             const testUser = JSON.parse(localStorage.getItem('testUser') || '{}');
             if (testUser.email === email && testUser.password === password) {
-                // Получаем данные пользователя из базы
-                const userData = await window.gameDB.getUserData(testUser.id);
-                const progressData = await window.gameDB.getUserProgress(testUser.id);
+                try {
+                    // Получаем данные пользователя из базы
+                    console.log('Fetching user data...');
+                    const userData = await window.gameDB.getUserData(testUser.id);
+                    console.log('User data:', userData);
 
-                // Сохраняем данные пользователя
-                localStorage.setItem('currentUser', JSON.stringify({
-                    id: testUser.id,
-                    email: email,
-                    username: userData.username,
-                    progress: progressData || {}
-                }));
+                    console.log('Fetching user progress...');
+                    const progressData = await window.gameDB.getUserProgress(testUser.id);
+                    console.log('User progress:', progressData);
 
-                // Перенаправляем на главную страницу
-                window.location.href = 'index.html';
+                    // Сохраняем данные пользователя
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        id: testUser.id,
+                        email: email,
+                        username: userData.username,
+                        progress: progressData || {}
+                    }));
+
+                    // Перенаправляем на главную страницу
+                    window.location.href = 'index.html';
+                } catch (dbError) {
+                    console.error('Database error:', dbError);
+                    if (dbError.message.includes('permission denied')) {
+                        showError('Ошибка доступа к базе данных. Пожалуйста, обратитесь к администратору.');
+                    } else {
+                        showError('Ошибка при получении данных пользователя');
+                    }
+                }
             } else {
                 showError('Неверный email или пароль');
             }
@@ -255,8 +296,13 @@ window.login = async function() {
                 console.log('Login successful:', data.user);
 
                 try {
+                    console.log('Fetching user data...');
                     const userData = await window.gameDB.getUserData(data.user.id);
+                    console.log('User data:', userData);
+
+                    console.log('Fetching user progress...');
                     const progressData = await window.gameDB.getUserProgress(data.user.id);
+                    console.log('User progress:', progressData);
 
                     // Сохраняем данные пользователя
                     localStorage.setItem('currentUser', JSON.stringify({
@@ -270,13 +316,21 @@ window.login = async function() {
                     window.location.href = 'index.html';
                 } catch (dbError) {
                     console.error('Database error:', dbError);
-                    showError('Ошибка при получении данных пользователя');
+                    if (dbError.message.includes('permission denied')) {
+                        showError('Ошибка доступа к базе данных. Пожалуйста, обратитесь к администратору.');
+                    } else {
+                        showError('Ошибка при получении данных пользователя');
+                    }
                 }
             }
         }
     } catch (error) {
         console.error('Login error:', error);
-        showError('Произошла ошибка при входе. Пожалуйста, попробуйте позже.');
+        if (error.message.includes('permission denied')) {
+            showError('Ошибка доступа к базе данных. Пожалуйста, обратитесь к администратору.');
+        } else {
+            showError('Произошла ошибка при входе. Пожалуйста, попробуйте позже.');
+        }
     }
 }
 
