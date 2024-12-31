@@ -59,73 +59,72 @@ window.register = async function() {
     }
 
     try {
-        // Проверяем, существует ли пользователь с таким email
-        const { data: existingUsers, error: checkError } = await window.supabaseClient
+        // Сначала попробуем получить структуру таблицы users
+        console.log('Checking database structure...');
+        const { error: structureError } = await window.supabaseClient
             .from('users')
-            .select('email')
-            .eq('email', email)
+            .select('id')
             .limit(1);
 
-        if (checkError) {
-            console.error('Error checking existing user:', checkError);
-            showError('Ошибка при проверке email. Пожалуйста, попробуйте позже.');
+        if (structureError) {
+            console.error('Database structure error:', structureError);
+            showError('Ошибка базы данных. Пожалуйста, попробуйте позже.');
             return;
         }
 
-        if (existingUsers && existingUsers.length > 0) {
-            showError('Пользователь с таким email уже существует');
+        console.log('Creating new user...');
+        // Создаем нового пользователя через Supabase Auth
+        const { data: authData, error: signUpError } = await window.supabaseClient.auth.signUp({
+            email: email,
+            password: password
+        });
+
+        if (signUpError) {
+            console.error('Auth error:', signUpError);
+            showError(signUpError.message);
             return;
         }
 
-        // Создаем нового пользователя
-        const userId = crypto.randomUUID(); // Генерируем UUID для пользователя
+        if (authData && authData.user) {
+            console.log('User created in Auth:', authData.user);
 
-        // Создаем запись в таблице users
-        const { error: userError } = await window.supabaseClient
-            .from('users')
-            .insert([
-                {
-                    id: userId,
-                    email: email,
-                    username: email.split('@')[0]
+            try {
+                // Создаем запись в таблице user_progress
+                console.log('Creating user progress...');
+                const { error: progressError } = await window.supabaseClient
+                    .from('user_progress')
+                    .insert([
+                        {
+                            user_id: authData.user.id,
+                            balance: 0,
+                            energy: 100,
+                            hourly_rate: 10
+                        }
+                    ]);
+
+                if (progressError) {
+                    console.error('Progress creation error:', progressError);
+                    showError('Ошибка при создании профиля. Пожалуйста, попробуйте позже.');
+                    return;
                 }
-            ]);
 
-        if (userError) {
-            console.error('User creation error:', userError);
-            showError('Ошибка при создании пользователя. Пожалуйста, попробуйте позже.');
-            return;
+                console.log('User progress created successfully');
+
+                // Показываем сообщение об успешной регистрации
+                alert('Регистрация успешна! Теперь вы можете войти в систему.');
+                
+                // Очищаем поля формы
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+                document.getElementById('regConfirmPassword').value = '';
+                
+                // Переключаемся на форму входа
+                window.toggleForms();
+            } catch (dbError) {
+                console.error('Database error:', dbError);
+                showError('Ошибка при создании профиля. Пожалуйста, попробуйте позже.');
+            }
         }
-
-        // Создаем начальный прогресс пользователя
-        const { error: progressError } = await window.supabaseClient
-            .from('user_progress')
-            .insert([
-                {
-                    user_id: userId,
-                    balance: 0,
-                    energy: 100,
-                    hourly_rate: 10
-                }
-            ]);
-
-        if (progressError) {
-            console.error('Progress creation error:', progressError);
-            showError('Ошибка при создании профиля. Пожалуйста, попробуйте позже.');
-            return;
-        }
-
-        // Показываем сообщение об успешной регистрации
-        alert('Регистрация успешна! Теперь вы можете войти в систему.');
-        
-        // Очищаем поля формы
-        document.getElementById('regEmail').value = '';
-        document.getElementById('regPassword').value = '';
-        document.getElementById('regConfirmPassword').value = '';
-        
-        // Переключаемся на форму входа
-        window.toggleForms();
-
     } catch (error) {
         console.error('Registration error:', error);
         showError('Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.');
@@ -150,38 +149,51 @@ window.login = async function() {
     }
 
     try {
-        // Проверяем существование пользователя
-        const { data: users, error: userError } = await window.supabaseClient
-            .from('users')
-            .select('*')
-            .eq('email', email)
-            .limit(1);
+        console.log('Attempting login...');
+        const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
 
-        if (userError) {
-            console.error('Login error:', userError);
-            showError('Ошибка при входе. Пожалуйста, попробуйте позже.');
+        if (error) {
+            console.error('Login error:', error);
+            if (error.message.includes('Invalid login credentials')) {
+                showError('Неверный email или пароль');
+            } else {
+                showError(error.message);
+            }
             return;
         }
 
-        if (!users || users.length === 0) {
-            showError('Пользователь с таким email не найден');
-            return;
+        if (data && data.user) {
+            console.log('Login successful:', data.user);
+
+            try {
+                // Получаем прогресс пользователя
+                const { data: progressData, error: progressError } = await window.supabaseClient
+                    .from('user_progress')
+                    .select('*')
+                    .eq('user_id', data.user.id)
+                    .single();
+
+                if (progressError) {
+                    console.error('Error fetching progress:', progressError);
+                }
+
+                // Сохраняем данные пользователя
+                localStorage.setItem('currentUser', JSON.stringify({
+                    id: data.user.id,
+                    email: data.user.email,
+                    progress: progressData || {}
+                }));
+
+                // Перенаправляем на главную страницу
+                window.location.href = 'index.html';
+            } catch (dbError) {
+                console.error('Database error:', dbError);
+                showError('Ошибка при получении данных пользователя');
+            }
         }
-
-        // Здесь должна быть проверка пароля, но так как мы не храним пароли,
-        // просто авторизуем пользователя
-        const user = users[0];
-        
-        // Сохраняем информацию о пользователе
-        localStorage.setItem('currentUser', JSON.stringify({
-            id: user.id,
-            email: user.email,
-            username: user.username
-        }));
-
-        // Перенаправляем на главную страницу
-        window.location.href = 'index.html';
-
     } catch (error) {
         console.error('Login error:', error);
         showError('Произошла ошибка при входе. Пожалуйста, попробуйте позже.');
