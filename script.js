@@ -14,6 +14,15 @@ document.addEventListener('DOMContentLoaded', function() {
     let totalHourlyRate = 10;
     let purchasedCards = []; // Массив для хранения купленных карт
 
+    // Глобальные переменные
+    let gameInterval;
+    let lastUpdate = Date.now();
+    let currentProgress = {
+        balance: 0,
+        energy: 100,
+        hourly_rate: 10
+    };
+
     // Функция для сохранения данных
     async function saveGameData() {
         try {
@@ -680,10 +689,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (window.gameDB.isTelegramUser()) {
             // Для пользователей Telegram
-            user = await window.gameDB.initUser(window.tg.initDataUnsafe.user);
+            user = await window.gameDB.getCurrentUser();
         } else {
             // Для обычных пользователей
-            user = await window.gameDB.initUser();
+            user = await window.gameDB.getCurrentUser();
         }
 
         if (!user) {
@@ -692,13 +701,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Загружаем прогресс
-        const progress = await window.gameDB.loadProgress();
+        const progress = await window.gameDB.getUserProgress();
         if (progress) {
             updateUI(progress);
         }
 
         // Запускаем игровой цикл
-        startGameLoop();
+        if (gameInterval) {
+            clearInterval(gameInterval);
+        }
+        gameInterval = setInterval(gameLoop, 1000);
+
     }
 
     // Обновление интерфейса
@@ -729,29 +742,83 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Игровой цикл
-    function startGameLoop() {
-        setInterval(async () => {
-            const progress = await window.gameDB.loadProgress();
-            if (progress) {
-                // Начисляем монеты
-                const hourlyRate = progress.hourly_rate || 10;
-                const earnedCoins = hourlyRate / 3600; // монеты в секунду
-                progress.balance += earnedCoins;
-                
-                // Уменьшаем энергию
-                if (progress.energy > 0) {
-                    progress.energy -= 0.1;
-                }
+    async function gameLoop() {
+        const now = Date.now();
+        const deltaTime = (now - lastUpdate) / 1000; // в секундах
+        lastUpdate = now;
 
-                // Сохраняем прогресс
-                await window.gameDB.saveProgress(progress);
-                
-                // Обновляем UI
-                updateUI(progress);
+        // Обновляем баланс
+        if (currentProgress.energy > 0) {
+            const earnedTokens = (currentProgress.hourly_rate / 3600) * deltaTime;
+            currentProgress.balance += earnedTokens;
+            
+            // Обновляем отображение баланса
+            document.querySelector('.balance').textContent = Math.floor(currentProgress.balance);
+            
+            // Каждые 30 секунд сохраняем прогресс
+            if (Math.floor(now / 30000) > Math.floor((now - deltaTime * 1000) / 30000)) {
+                await window.gameDB.updateBalance(currentProgress.balance);
             }
-        }, 1000); // Обновление каждую секунду
+        }
+
+        // Обновляем энергию
+        if (currentProgress.energy > 0) {
+            currentProgress.energy -= (100 / (4 * 3600)) * deltaTime; // Полная энергия тратится за 4 часа
+            if (currentProgress.energy < 0) currentProgress.energy = 0;
+            
+            // Обновляем отображение энергии
+            updateEnergyBar(currentProgress.energy);
+            
+            // Каждые 30 секунд сохраняем энергию
+            if (Math.floor(now / 30000) > Math.floor((now - deltaTime * 1000) / 30000)) {
+                await window.gameDB.updateEnergy(currentProgress.energy);
+            }
+        }
     }
 
-    // Запускаем игру при загрузке страницы
-    initGame();
+    // Обновление полосы энергии
+    function updateEnergyBar(energy) {
+        const energyText = document.querySelector('.progress-text');
+        const energyBar = document.querySelector('.progress');
+        
+        // Обновляем текст
+        energyText.textContent = `${Math.floor(energy)}/100`;
+        
+        // Обновляем полосу
+        energyBar.style.width = `${energy}%`;
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', initGame);
+
+    // Обработчики навигации
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Убираем активный класс у всех элементов
+            document.querySelectorAll('.nav-item').forEach(navItem => {
+                navItem.classList.remove('active');
+            });
+            
+            // Добавляем активный класс текущему элементу
+            this.classList.add('active');
+            
+            // Получаем секцию для отображения
+            const section = this.dataset.section;
+            
+            // Скрываем все секции
+            document.querySelector('.game-area').style.display = 'none';
+            document.querySelector('.progress-container').style.display = 'none';
+            document.querySelector('.reward-section').style.display = 'none';
+            
+            // Показываем нужную секцию
+            if (section === 'home') {
+                document.querySelector('.game-area').style.display = 'block';
+                document.querySelector('.progress-container').style.display = 'block';
+            } else if (section === 'reward') {
+                document.querySelector('.reward-section').style.display = 'block';
+            }
+        });
+    });
 });

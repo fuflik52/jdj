@@ -7,6 +7,22 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="sections.css">
     <link rel="stylesheet" href="reward.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Инициализация Supabase
+        const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4NTM1MTAsImV4cCI6MjAxOTQyOTUxMH0.JVG33zXYj1LxqwboJ3XKpxgikc-1q_wX1R4ORXGkwBE';
+        window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Проверка авторизации
+        async function checkAuth() {
+            const { data: { user } } = await window.supabase.auth.getUser();
+            if (!user) {
+                window.location.href = 'login.html';
+            }
+            return user;
+        }
+    </script>
 </head>
 <body>
     <div class="mobile-frame">
@@ -94,28 +110,14 @@
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        // Глобальные объекты
-        window.tg = window.Telegram.WebApp;
-        window.supabase = window.supabase.createClient(
-            'https://qgalbzidagyazfdvnfll.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
-        );
+        // Глобальные объекты Telegram
+        window.tg = window.Telegram ? window.Telegram.WebApp : null;
     </script>
-    <script src="telegram.js"></script>
-    <script src="background.js"></script>
-    <script src="snow.js"></script>
     <script src="db.js"></script>
     <script src="script.js"></script>
     <script>
-        // Проверяем авторизацию
-        async function checkAuth() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                window.location.href = 'login.html';
-            }
-        }
+        // Проверяем авторизацию при загрузке страницы
         checkAuth();
     </script>
 </body>
