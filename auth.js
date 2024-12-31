@@ -59,21 +59,9 @@ window.register = async function() {
     }
 
     try {
-        // Сначала попробуем получить структуру таблицы users
-        console.log('Checking database structure...');
-        const { error: structureError } = await window.supabaseClient
-            .from('users')
-            .select('id')
-            .limit(1);
-
-        if (structureError) {
-            console.error('Database structure error:', structureError);
-            showError('Ошибка базы данных. Пожалуйста, попробуйте позже.');
-            return;
-        }
-
-        console.log('Creating new user...');
-        // Создаем нового пользователя через Supabase Auth
+        console.log('Starting registration process...');
+        
+        // Создаем пользователя через Supabase Auth
         const { data: authData, error: signUpError } = await window.supabaseClient.auth.signUp({
             email: email,
             password: password
@@ -81,7 +69,11 @@ window.register = async function() {
 
         if (signUpError) {
             console.error('Auth error:', signUpError);
-            showError(signUpError.message);
+            if (signUpError.message.includes('rate limit')) {
+                showError('Превышен лимит регистраций. Пожалуйста, попробуйте позже.');
+            } else {
+                showError(signUpError.message);
+            }
             return;
         }
 
@@ -89,6 +81,26 @@ window.register = async function() {
             console.log('User created in Auth:', authData.user);
 
             try {
+                // Создаем запись в таблице users
+                console.log('Creating user record...');
+                const { error: userError } = await window.supabaseClient
+                    .from('users')
+                    .insert([
+                        {
+                            id: authData.user.id,
+                            email: email,
+                            username: email.split('@')[0]
+                        }
+                    ]);
+
+                if (userError) {
+                    console.error('User record creation error:', userError);
+                    showError('Ошибка при создании пользователя. Пожалуйста, попробуйте позже.');
+                    return;
+                }
+
+                console.log('User record created successfully');
+
                 // Создаем запись в таблице user_progress
                 console.log('Creating user progress...');
                 const { error: progressError } = await window.supabaseClient
@@ -169,6 +181,17 @@ window.login = async function() {
             console.log('Login successful:', data.user);
 
             try {
+                // Получаем данные пользователя
+                const { data: userData, error: userError } = await window.supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('id', data.user.id)
+                    .single();
+
+                if (userError) {
+                    console.error('Error fetching user data:', userError);
+                }
+
                 // Получаем прогресс пользователя
                 const { data: progressData, error: progressError } = await window.supabaseClient
                     .from('user_progress')
@@ -184,6 +207,7 @@ window.login = async function() {
                 localStorage.setItem('currentUser', JSON.stringify({
                     id: data.user.id,
                     email: data.user.email,
+                    username: userData?.username || email.split('@')[0],
                     progress: progressData || {}
                 }));
 
