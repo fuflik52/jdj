@@ -1,122 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koala Game - Login</title>
-    <!-- Добавляем Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // Инициализация Supabase
-        const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4NTM1MTAsImV4cCI6MjAxOTQyOTUxMH0.JVG33zXYj1LxqwboJ3XKpxgikc-1q_wX1R4ORXGkwBE';
-        window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Проверяем, авторизован ли пользователь
-        async function checkAuth() {
-            try {
-                const { data: { user } } = await window.supabase.auth.getUser();
-                if (user) {
-                    window.location.href = 'index.html';
-                }
-            } catch (error) {
-                console.error('Auth check error:', error);
-            }
-        }
-        checkAuth();
-    </script>
+    <title>Вход в систему</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: #1a1b1a;
-            color: white;
+            background-color: #f5f5f5;
         }
 
-        .login-container {
-            background: #262626;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            width: 90%;
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
             max-width: 400px;
         }
 
+        h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+        }
+
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 15px;
         }
 
         label {
             display: block;
-            margin-bottom: 0.5rem;
-            color: #ccc;
+            margin-bottom: 5px;
+            color: #666;
         }
 
         input {
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #444;
-            border-radius: 0.5rem;
-            background: #333;
-            color: white;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
             box-sizing: border-box;
         }
 
         button {
             width: 100%;
-            padding: 0.75rem;
-            background: #4CAF50;
-            border: none;
-            border-radius: 0.5rem;
+            padding: 10px;
+            background-color: #007bff;
             color: white;
-            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
-            margin-top: 1rem;
+            font-size: 16px;
+            margin-top: 10px;
         }
 
         button:hover {
-            background: #45a049;
+            background-color: #0056b3;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-top: 5px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .info-text {
+            color: #666;
+            font-size: 12px;
+            margin-top: 4px;
         }
 
         .toggle-form {
             text-align: center;
-            margin-top: 1rem;
-            color: #888;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
         }
 
         .toggle-form a {
-            color: #4CAF50;
+            color: #007bff;
             text-decoration: none;
             cursor: pointer;
         }
 
-        .error-message {
-            color: #ff6b6b;
-            margin: 1rem 0;
-            text-align: center;
+        .toggle-form a:hover {
+            text-decoration: underline;
         }
 
         #registerForm {
             display: none;
         }
-
-        .info-text {
-            font-size: 0.9rem;
-            color: #888;
-            margin-top: 0.5rem;
-        }
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="container">
         <!-- Форма входа -->
         <form id="loginForm">
-            <h2>Вход в игру</h2>
+            <h2>Вход в систему</h2>
             <div class="form-group">
                 <label for="loginEmail">Email</label>
                 <input type="email" id="loginEmail" required>
@@ -156,24 +144,23 @@
         </form>
     </div>
 
+    <!-- Загружаем Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Проверяем, что Supabase загрузился
+        if (!window.supabase) {
+            console.error('Supabase not loaded!');
+        }
+    </script>
+    <!-- Загружаем наши скрипты -->
+    <script src="db.js"></script>
     <script src="auth.js"></script>
     <script>
-        function toggleForms() {
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
-            
-            if (loginForm.style.display === 'none') {
-                loginForm.style.display = 'block';
-                registerForm.style.display = 'none';
-            } else {
-                loginForm.style.display = 'none';
-                registerForm.style.display = 'block';
-            }
-
-            // Очистка сообщений об ошибках при переключении форм
-            document.querySelectorAll('.error-message').forEach(msg => {
-                msg.textContent = '';
-            });
+        // Проверяем авторизацию при загрузке страницы
+        if (window.checkAuth) {
+            window.checkAuth();
+        } else {
+            console.error('Auth functions not loaded!');
         }
     </script>
 </body>

@@ -1,125 +1,85 @@
+// Используем существующий supabaseClient из db.js
+const { supabaseClient } = window.gameDB;
 
-const SUPABASE_URL = 'https://qgalbzidagyazfdvnfll.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4NTM1MTAsImV4cCI6MjAxOTQyOTUxMH0.JVG33zXYj1LxqwboJ3XKpxgikc-1q_wX1R4ORXGkwBE';
-
-// Создаем клиент Supabase
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Переключение между формами входа и регистрации
-function toggleForms() {
+// Функция переключения форм
+window.toggleForms = function() {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
-    const errorMessage = document.getElementById('errorMessage');
-
-    loginForm.style.display = loginForm.style.display === 'none' ? 'block' : 'none';
-    registerForm.style.display = registerForm.style.display === 'none' ? 'block' : 'none';
-    errorMessage.style.display = 'none';
-    errorMessage.textContent = '';
-}
-
-// Показ сообщения об ошибке
-function showError(message, isRegistration = false) {
-    const errorElement = document.getElementById(isRegistration ? 'regErrorMessage' : 'loginErrorMessage');
-    if (errorElement) {
-        errorElement.textContent = message;
+    
+    if (loginForm.style.display === 'none') {
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
+    } else {
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
     }
+
+    // Очистка сообщений об ошибках при переключении форм
+    document.querySelectorAll('.error-message').forEach(msg => {
+        msg.textContent = '';
+        msg.style.display = 'none';
+    });
 }
 
 // Регистрация нового пользователя
-async function register() {
+window.register = async function() {
     const email = document.getElementById('regEmail').value;
     const password = document.getElementById('regPassword').value;
     const confirmPassword = document.getElementById('regConfirmPassword').value;
+    const errorElement = document.getElementById('regErrorMessage');
+
+    // Показываем сообщение об ошибке
+    function showError(message) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+    }
 
     // Валидация
     if (!email || !password || !confirmPassword) {
-        showError('Пожалуйста, заполните все поля', true);
+        showError('Пожалуйста, заполните все поля');
         return;
     }
 
     if (password.length < 6) {
-        showError('Пароль должен содержать минимум 6 символов', true);
+        showError('Пароль должен содержать минимум 6 символов');
         return;
     }
 
     if (password !== confirmPassword) {
-        showError('Пароли не совпадают', true);
+        showError('Пароли не совпадают');
         return;
     }
 
     try {
-        console.log('Attempting registration with:', email);
-        
-        // Регистрация пользователя
-        const { data: { user }, error: signUpError } = await supabaseClient.auth.signUp({
+        const { data, error } = await window.supabaseClient.auth.signUp({
             email: email,
             password: password
         });
 
-        if (signUpError) {
-            console.error('Registration error:', signUpError);
-            throw signUpError;
-        }
-
-        if (user) {
-            console.log('Registration successful:', user);
-            
-            // Создание записи в таблице users
-            const { error: userError } = await supabaseClient
-                .from('users')
-                .insert([
-                    {
-                        id: user.id,
-                        username: email.split('@')[0],
-                        web_user: true
-                    }
-                ])
-                .select('id, username, web_user');
-
-            if (userError) {
-                console.error('User creation error:', userError);
-                throw userError;
-            }
-
-            // Создание начального прогресса
-            const { error: progressError } = await supabaseClient
-                .from('user_progress')
-                .insert([
-                    {
-                        user_id: user.id,
-                        balance: 0,
-                        energy: 100,
-                        hourly_rate: 10
-                    }
-                ]);
-
-            if (progressError) {
-                console.error('Progress creation error:', progressError);
-                throw progressError;
-            }
-
-            // Показываем сообщение об успешной регистрации
-            showError('Регистрация успешна! Проверьте почту для подтверждения.', true);
-            
-            // Через 2 секунды переключаемся на форму входа
-            setTimeout(() => {
-                toggleForms();
-            }, 2000);
+        if (error) {
+            showError(error.message);
+        } else {
+            // Успешная регистрация
+            alert('На ваш email отправлено письмо для подтверждения регистрации');
+            window.toggleForms(); // Переключаемся на форму входа
         }
     } catch (error) {
+        showError('Произошла ошибка при регистрации');
         console.error('Registration error:', error);
-        if (error.message.includes('duplicate key')) {
-            showError('Этот email уже зарегистрирован', true);
-        } else {
-            showError(error.message, true);
-        }
     }
 }
 
 // Вход существующего пользователя
-async function login() {
+window.login = async function() {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
+    const errorElement = document.getElementById('loginErrorMessage');
+
+    // Показываем сообщение об ошибке
+    function showError(message) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+    }
 
     if (!email || !password) {
         showError('Пожалуйста, заполните все поля');
@@ -127,37 +87,40 @@ async function login() {
     }
 
     try {
-        console.log('Attempting login with:', email);
-        
-        const { data: { user }, error } = await supabaseClient.auth.signInWithPassword({
+        const { data, error } = await window.supabaseClient.auth.signInWithPassword({
             email: email,
             password: password
         });
 
         if (error) {
             console.error('Login error:', error);
-            throw error;
-        }
-
-        if (user) {
-            console.log('Login successful:', user);
-            // Перенаправляем на игру
+            
+            // Обработка конкретных ошибок
+            if (error.message.includes('Invalid login credentials')) {
+                showError('Неверный email или пароль');
+            } else if (error.message.includes('Email not confirmed')) {
+                showError('Пожалуйста, подтвердите ваш email перед входом. Проверьте почту.');
+            } else {
+                showError(error.message);
+            }
+        } else {
+            // Успешный вход
             window.location.href = 'index.html';
         }
     } catch (error) {
         console.error('Login error:', error);
-        showError('Неверный email или пароль');
+        showError('Произошла ошибка при входе. Пожалуйста, попробуйте позже.');
     }
 }
 
-// Проверка авторизации
-async function checkAuth() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) {
-        window.location.href = 'login.html';
+// Проверка авторизации при загрузке страницы
+window.checkAuth = async function() {
+    try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (user) {
+            window.location.href = 'index.html';
+        }
+    } catch (error) {
+        console.error('Auth check error:', error);
     }
 }
-
-// Проверяем авторизацию при загрузке страницы
-checkAuth();
-ы
