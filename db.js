@@ -1,148 +1,102 @@
-// Инициализация Supabase
-const supabaseUrl = 'https://qgalbzidagyazfdvnfll.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM5MjgxNzAsImV4cCI6MjAxOTUwNDE3MH0.qgZBGvZMXDOLmhqTyPKrqSEqDvXfvGNYiDw_7zBo1Vc';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+import { createClient } from '@supabase/supabase-js'
 
-class GameDatabase {
-    constructor() {
-        this.currentUser = null;
-        this.onUserUpdate = null;
-        this.onProgressUpdate = null;
-    }
+// Инициализация клиента Supabase
+const supabase = createClient(
+    'https://qgalbzidagyazfdvnfll.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWxiemlkYWd5YXpmZHZuZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NDE0MDYsImV4cCI6MjA1MTIxNzQwNn0.G5sfdgJRvE3pzGPpJGUcRTuzlnP7a7Cw1kdxa0lJJEg'
+);
 
-    // Инициализация пользователя через Telegram
+const gameDB = {
+    // Инициализация пользователя
     async initUser(telegramUser) {
         try {
-            let { data: user, error } = await supabase
-                .from('users')
-                .select()
-                .eq('telegram_id', telegramUser.id)
-                .single();
-
-            if (!user) {
-                const { data: newUser, error: createError } = await supabase
-                    .from('users')
-                    .insert([{
-                        username: telegramUser.username || `Player${telegramUser.id}`,
-                        telegram_id: telegramUser.id.toString()
-                    }])
-                    .select()
-                    .single();
-
-                if (createError) throw createError;
-                user = newUser;
-            }
-
-            this.currentUser = user;
-            if (this.onUserUpdate) this.onUserUpdate(user);
-            
-            // Загружаем или создаём прогресс
-            await this.initProgress();
-            
-            return user;
-        } catch (error) {
-            console.error('Error initializing user:', error);
-            return null;
-        }
-    }
-
-    // Инициализация или создание прогресса
-    async initProgress() {
-        if (!this.currentUser) return null;
-
-        try {
-            let { data: progress, error } = await supabase
-                .from('game_progress')
-                .select()
-                .eq('user_id', this.currentUser.id)
-                .single();
-
-            if (!progress) {
-                const { data: newProgress, error: createError } = await supabase
-                    .from('game_progress')
-                    .insert([{
-                        user_id: this.currentUser.id,
-                        balance: 0,
-                        energy: 100,
-                        hourly_rate: 10
-                    }])
-                    .select()
-                    .single();
-
-                if (createError) throw createError;
-                progress = newProgress;
-            }
-
-            if (this.onProgressUpdate) this.onProgressUpdate(progress);
-            return progress;
-        } catch (error) {
-            console.error('Error initializing progress:', error);
-            return null;
-        }
-    }
-
-    // Обновление баланса
-    async updateBalance(newBalance) {
-        if (!this.currentUser) return false;
-
-        try {
             const { data, error } = await supabase
-                .from('game_progress')
-                .update({ balance: newBalance })
-                .eq('user_id', this.currentUser.id)
+                .from('users')
+                .upsert({
+                    telegram_id: telegramUser.id,
+                    username: telegramUser.username,
+                    first_name: telegramUser.first_name,
+                    last_name: telegramUser.last_name,
+                    balance: 0,
+                    energy: 100
+                })
                 .select()
                 .single();
 
             if (error) throw error;
-            if (this.onProgressUpdate) this.onProgressUpdate(data);
+            return data;
+        } catch (error) {
+            console.error('Error initializing user:', error);
+            return null;
+        }
+    },
+
+    // Загрузка прогресса
+    async initProgress() {
+        try {
+            const { data, error } = await supabase
+                .from('game_progress')
+                .select('*')
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Error loading progress:', error);
+            return null;
+        }
+    },
+
+    // Обновление баланса
+    async updateBalance(balance) {
+        try {
+            const { error } = await supabase
+                .from('users')
+                .update({ balance })
+                .eq('telegram_id', window.tg.initDataUnsafe.user.id);
+
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error updating balance:', error);
             return false;
         }
-    }
+    },
 
     // Обновление энергии
-    async updateEnergy(newEnergy) {
-        if (!this.currentUser) return false;
-
+    async updateEnergy(energy) {
         try {
-            const { data, error } = await supabase
-                .from('game_progress')
-                .update({ energy: newEnergy })
-                .eq('user_id', this.currentUser.id)
-                .select()
-                .single();
+            const { error } = await supabase
+                .from('users')
+                .update({ energy })
+                .eq('telegram_id', window.tg.initDataUnsafe.user.id);
 
             if (error) throw error;
-            if (this.onProgressUpdate) this.onProgressUpdate(data);
             return true;
         } catch (error) {
             console.error('Error updating energy:', error);
             return false;
         }
-    }
+    },
 
-    // Получение списка карточек
+    // Получение всех карточек
     async getCards() {
         try {
             const { data, error } = await supabase
                 .from('cards')
                 .select('*')
-                .order('price', { ascending: true });
+                .order('price');
 
             if (error) throw error;
             return data;
         } catch (error) {
-            console.error('Error fetching cards:', error);
+            console.error('Error getting cards:', error);
             return [];
         }
-    }
+    },
 
     // Получение купленных карточек
     async getPurchasedCards() {
-        if (!this.currentUser) return [];
-
         try {
             const { data, error } = await supabase
                 .from('purchased_cards')
@@ -150,69 +104,76 @@ class GameDatabase {
                     *,
                     cards (*)
                 `)
-                .eq('user_id', this.currentUser.id);
+                .eq('user_id', window.tg.initDataUnsafe.user.id);
 
             if (error) throw error;
-            return data.map(item => item.cards);
+            return data.map(pc => pc.cards);
         } catch (error) {
-            console.error('Error fetching purchased cards:', error);
+            console.error('Error getting purchased cards:', error);
             return [];
         }
-    }
+    },
 
     // Покупка карточки
     async purchaseCard(cardId) {
-        if (!this.currentUser) return false;
-
         try {
-            const { error } = await supabase
-                .from('purchased_cards')
-                .insert([{
-                    user_id: this.currentUser.id,
-                    card_id: cardId
-                }]);
+            // Начинаем транзакцию
+            const { data: { user_id } } = await supabase.auth.getUser();
+            
+            // Получаем карточку и проверяем баланс
+            const { data: card } = await supabase
+                .from('cards')
+                .select('*')
+                .eq('id', cardId)
+                .single();
 
-            if (error) throw error;
+            const { data: user } = await supabase
+                .from('users')
+                .select('balance')
+                .eq('telegram_id', window.tg.initDataUnsafe.user.id)
+                .single();
+
+            if (user.balance < card.price) {
+                throw new Error('Insufficient funds');
+            }
+
+            // Покупаем карточку и обновляем баланс
+            const { error: purchaseError } = await supabase
+                .from('purchased_cards')
+                .insert({
+                    user_id: window.tg.initDataUnsafe.user.id,
+                    card_id: cardId
+                });
+
+            if (purchaseError) throw purchaseError;
+
+            // Обновляем баланс пользователя
+            const { error: balanceError } = await supabase
+                .from('users')
+                .update({ balance: user.balance - card.price })
+                .eq('telegram_id', window.tg.initDataUnsafe.user.id);
+
+            if (balanceError) throw balanceError;
+
             return true;
         } catch (error) {
             console.error('Error purchasing card:', error);
             return false;
         }
-    }
+    },
 
-    // Получение часового дохода
-    async getHourlyRate() {
-        if (!this.currentUser) return 0;
-
+    // Расчет часового дохода
+    async calculateHourlyRate() {
         try {
             const purchasedCards = await this.getPurchasedCards();
-            const baseRate = 10; // Базовый доход
-            const cardsRate = purchasedCards.reduce((sum, card) => sum + card.per_hour, 0);
-            return baseRate + cardsRate;
+            const baseRate = 10;
+            const totalRate = purchasedCards.reduce((sum, card) => sum + card.per_hour, baseRate);
+            return totalRate;
         } catch (error) {
             console.error('Error calculating hourly rate:', error);
-            return 0;
+            return 10; // Базовая ставка в случае ошибки
         }
     }
+};
 
-    // Обновление времени последнего сбора
-    async updateLastCollectTime() {
-        if (!this.currentUser) return false;
-
-        try {
-            const { error } = await supabase
-                .from('game_progress')
-                .update({ last_collect_time: new Date().toISOString() })
-                .eq('user_id', this.currentUser.id);
-
-            if (error) throw error;
-            return true;
-        } catch (error) {
-            console.error('Error updating last collect time:', error);
-            return false;
-        }
-    }
-}
-
-// Создаём и экспортируем экземпляр базы данных
-window.gameDB = new GameDatabase();
+export default gameDB;

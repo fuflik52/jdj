@@ -1,3 +1,10 @@
+// Инициализация Telegram WebApp
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+// Импортируем функции для работы с базой данных
+import gameDB from './db.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     const mainCircle = document.querySelector('.main-circle');
     const gameArea = document.querySelector('.game-area');
@@ -15,14 +22,50 @@ document.addEventListener('DOMContentLoaded', function() {
     window.purchasedCards = []; // Массив для хранения купленных карт
 
     // Функция для сохранения данных
-    function saveGameData() {
+    async function saveGameData() {
+        try {
+            // Сначала пытаемся сохранить в базу данных
+            if (tg.initDataUnsafe.user) {
+                await gameDB.updateBalance(clickCount);
+                await gameDB.updateEnergy(energy);
+            }
+        } catch (error) {
+            console.error('Error saving to database:', error);
+        }
+
+        // В любом случае сохраняем локально как резервную копию
         localStorage.setItem('balance', clickCount);
         localStorage.setItem('purchasedCards', JSON.stringify(window.purchasedCards));
         localStorage.setItem('energy', energy);
     }
 
     // Функция для загрузки сохраненных данных
-    function loadGameData() {
+    async function loadGameData() {
+        try {
+            // Сначала пытаемся загрузить из базы данных
+            if (tg.initDataUnsafe.user) {
+                await gameDB.initUser(tg.initDataUnsafe.user);
+                const progress = await gameDB.initProgress();
+                if (progress) {
+                    clickCount = progress.balance;
+                    energy = progress.energy;
+                    balanceElement.textContent = Math.floor(clickCount);
+                    updateEnergy();
+                }
+
+                // Загружаем купленные карточки
+                const dbPurchasedCards = await gameDB.getPurchasedCards();
+                if (dbPurchasedCards.length > 0) {
+                    window.purchasedCards = dbPurchasedCards;
+                    updateTotalHourlyRate();
+                }
+                return;
+            }
+        } catch (error) {
+            console.error('Error loading from database:', error);
+        }
+
+        // Если не удалось загрузить из базы, используем localStorage
         const savedBalance = localStorage.getItem('balance');
         const savedPurchasedCards = localStorage.getItem('purchasedCards');
         const savedEnergy = localStorage.getItem('energy');
@@ -66,13 +109,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Функция для обновления общей почасовой прибыли
-    function updateTotalHourlyRate() {
-        window.totalHourlyRate = 10; // Базовая прибыль
-        if (window.purchasedCards && window.purchasedCards.length > 0) {
-            window.purchasedCards.forEach(card => {
-                window.totalHourlyRate += Number(card.perHour);
-            });
+    async function updateTotalHourlyRate() {
+        try {
+            // Пытаемся получить часовой доход из базы данных
+            if (tg.initDataUnsafe.user) {
+                const dbRate = await gameDB.calculateHourlyRate();
+                window.totalHourlyRate = dbRate;
+            } else {
+                window.totalHourlyRate = 10; // Базовая прибыль
+                if (window.purchasedCards && window.purchasedCards.length > 0) {
+                    window.purchasedCards.forEach(card => {
+                        window.totalHourlyRate += Number(card.perHour);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error calculating hourly rate:', error);
+            // В случае ошибки считаем локально
+            window.totalHourlyRate = 10;
+            if (window.purchasedCards && window.purchasedCards.length > 0) {
+                window.purchasedCards.forEach(card => {
+                    window.totalHourlyRate += Number(card.perHour);
+                });
+            }
         }
+
         const rateElement = document.querySelector('.user-info .rate');
         if (rateElement) {
             rateElement.textContent = `${window.totalHourlyRate}/hour`;
@@ -172,7 +233,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Добавляем обработку покупки карточки
-    function handleCardPurchase(card) {
+    async function handleCardPurchase(card) {
+        try {
+            if (tg.initDataUnsafe.user) {
+                await gameDB.purchaseCard(card.id);
+            }
+        } catch (error) {
+            console.error('Error saving purchase to database:', error);
+        }
+
+        // В любом случае обновляем локальное состояние
         if (window.telegramAuth) {
             window.telegramAuth.addPurchasedItem(card);
             window.purchasedCards = window.telegramAuth.purchasedItems;
