@@ -467,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 image: "https://res.cloudinary.com/dib4woqge/image/upload/v1735300135/1000000472_wu48p4.png",
                 title: "Начало пути",
                 description: "Коала только начинает своё путешествие. Даёт 120 эвкалипта в час",
-                price: "10000",
+                price: "1",
                 perHour: 120
             },
             {
@@ -475,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 image: "https://i.postimg.cc/sxpJmh0S/image.png",
                 title: "Первые деньги",
                 description: "Коала заработала свои первые деньги. Продолжаем в том же духе. Добавляет 350 эвкалипта в час",
-                price: "25000",
+                price: "1",
                 perHour: 350
             },
 
@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 image: "https://i.postimg.cc/pVwWnFHC/image.png",
                 title: "Коала на отдыхе",
                 description: "После первых заработанных денег можно хорошенько отдохнуть. Добавляет 800 эвкалипта в час",
-                price: "35000",
+                price: "1",
                 perHour: 800
             },
             {
@@ -492,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 image: "https://i.postimg.cc/nLCgk3KD/image.png",
                 title: "Снежные забавы",
                 description: "Наступила зима, а значит можно хорошо порезвиться в снежки. Но не забываем про прибыль в 1800 эвкалипта в час",
-                price: "50000",
+                price: "1",
                 perHour: 1800
             },
             {
@@ -500,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 image: "https://i.postimg.cc/wTxjfh3V/Leonardo-Phoenix-10-A-vibrant-whimsical-illustration-of-Koala-2.jpg",
                 title: "Коала-путешественник",
                 description: "Наша коала отправляется в кругосветное путешествие, собирая эвкалипт по всему миру. Приносит 3500 эвкалипта в час",
-                price: "75000",
+                price: "1",
                 perHour: 3500,
                 isNew: true
             },
@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 image: "https://i.postimg.cc/3JnrGd8c/Leonardo-Phoenix-10-A-whimsical-digital-illustration-of-a-koal-0.jpg",
                 title: "Бизнес-коала",
                 description: "Пора открывать свой бизнес! Коала в деловом костюме управляет сетью эвкалиптовых плантаций. Добавляет 7000 эвкалипта в час",
-                price: "100000",
+                price: "1",
                 perHour: 7000,
                 isNew: true
             },
@@ -518,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 image: "https://i.postimg.cc/zvqbJ67b/Leonardo-Phoenix-10-A-vibrant-whimsical-illustration-of-Space-0.jpg",
                 title: "Космический исследователь",
                 description: "Коала покоряет космос в поисках редких видов эвкалипта на других планетах. Приносит 12000 эвкалипта в час",
-                price: "150000",
+                price: "1",
                 perHour: 12000,
                 isNew: true
             },
@@ -527,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 image: "https://i.postimg.cc/bv23bSh0/Leonardo-Phoenix-10-In-a-whimsical-vibrant-illustration-depict-0.jpg",
                 title: "Коала-волшебник",
                 description: "Магия и эвкалипт - отличное сочетание! Коала освоила древние заклинания приумножения эвкалипта. Добавляет 20000 эвкалипта в час",
-                price: "200000",
+                price: "1",
                 perHour: 20000,
                 isNew: true
             }
